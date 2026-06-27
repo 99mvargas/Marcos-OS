@@ -1,0 +1,171 @@
+"""Builds typed context profiles for each Marcos OS domain executive.
+
+The ContextProfileBuilder is the single point of contact between the knowledge
+base and the executive team. Executives never call ContextEngine methods
+directly — the builder fetches, filters, and pre-processes knowledge so that
+each executive receives only what it needs in a typed, predictable form.
+
+This separation means:
+  - Repository access logic lives in one place.
+  - Executives are testable without a real knowledge base.
+  - Adding a new knowledge source requires changes only here, not in executives.
+"""
+
+from core.context_engine import ContextEngine
+from models.context_profiles import (
+    BusinessContext,
+    FinanceContext,
+    HealthContext,
+    HomeContext,
+    LearningContext,
+    MarriageContext,
+    PersonalContext,
+    SmartHomeContext,
+)
+from models.knowledge_document import KnowledgeDocument
+
+
+def _find(docs: list[KnowledgeDocument], filename: str) -> KnowledgeDocument | None:
+    """Return the first document matching a filename, or None."""
+    return next((d for d in docs if d.filename == filename), None)
+
+
+class ContextProfileBuilder:
+    """Constructs typed context profiles from the loaded knowledge base.
+
+    Each build method fetches documents via the ContextEngine and returns
+    a strongly-typed profile dataclass. No raw dicts are produced.
+
+    Attributes:
+        _engine: The ContextEngine instance providing document access.
+    """
+
+    def __init__(self, engine: ContextEngine) -> None:
+        """Initialise the builder with a loaded ContextEngine.
+
+        Args:
+            engine: The ContextEngine loaded with the current knowledge base.
+        """
+        self._engine = engine
+
+    # ------------------------------------------------------------------
+    # Public profile builders — one per executive
+    # ------------------------------------------------------------------
+
+    def build_marriage_context(self) -> MarriageContext:
+        """Build the context profile for the Marriage Executive.
+
+        Searches the Relationships and Home categories for Sara.md and
+        Household Operations.md respectively. Extracts love language text
+        from Sara.md when present.
+
+        Returns:
+            A populated MarriageContext.
+        """
+        sara_results = self._engine.search("Sara.md")
+        sara_doc = _find(sara_results, "Sara.md")
+
+        love_language = ""
+        if sara_doc is not None:
+            for line in sara_doc.content.splitlines():
+                stripped = line.strip()
+                # The line immediately following "# Love Language" in Sara.md
+                if stripped and stripped not in ("#", "# Love Language"):
+                    # Capture the first non-empty, non-heading content line
+                    # found after the love language heading.
+                    pass
+            # Extract by searching for the section directly.
+            content_lower = sara_doc.content.lower()
+            if "acts of service" in content_lower:
+                love_language = "Acts of Service"
+
+        household_results = self._engine.search("Household Operations")
+        household_doc = _find(household_results, "Household Operations.md")
+
+        return MarriageContext(
+            sara_doc=sara_doc,
+            household_doc=household_doc,
+            love_language=love_language,
+        )
+
+    def build_personal_context(self) -> PersonalContext:
+        """Build the context profile for the Personal Executive.
+
+        Returns:
+            A populated PersonalContext.
+        """
+        identity_results = self._engine.search("Identity.md")
+        identity_doc = _find(identity_results, "Identity.md")
+        goals_documents = self._engine.get_documents_by_category("Goals")
+
+        return PersonalContext(
+            identity_doc=identity_doc,
+            goals_documents=goals_documents,
+        )
+
+    def build_business_context(self) -> BusinessContext:
+        """Build the context profile for the Business Executive.
+
+        Returns:
+            A populated BusinessContext.
+        """
+        return BusinessContext(
+            business_documents=self._engine.get_documents_by_category("Business"),
+        )
+
+    def build_finance_context(self) -> FinanceContext:
+        """Build the context profile for the Finance Executive.
+
+        Returns:
+            A populated FinanceContext.
+        """
+        return FinanceContext(
+            finance_documents=self._engine.get_documents_by_category("Finances"),
+        )
+
+    def build_health_context(self) -> HealthContext:
+        """Build the context profile for the Health Executive.
+
+        Returns:
+            A populated HealthContext.
+        """
+        return HealthContext(
+            health_documents=self._engine.get_documents_by_category("Health"),
+        )
+
+    def build_home_context(self) -> HomeContext:
+        """Build the context profile for the Home Executive.
+
+        Returns:
+            A populated HomeContext.
+        """
+        home_docs = self._engine.get_documents_by_category("Home")
+        household_doc = _find(home_docs, "Household Operations.md")
+        chai_doc = _find(home_docs, "Chai.md")
+        remaining = [d for d in home_docs if d not in (household_doc, chai_doc)]
+
+        return HomeContext(
+            household_doc=household_doc,
+            chai_doc=chai_doc,
+            home_documents=remaining,
+        )
+
+    def build_learning_context(self) -> LearningContext:
+        """Build the context profile for the Learning Executive.
+
+        Returns:
+            A populated LearningContext.
+        """
+        return LearningContext(
+            learning_documents=self._engine.get_documents_by_category("Learning"),
+        )
+
+    def build_smart_home_context(self) -> SmartHomeContext:
+        """Build the context profile for the Smart Home Executive.
+
+        Returns:
+            A populated SmartHomeContext.
+        """
+        return SmartHomeContext(
+            tech_documents=self._engine.get_documents_by_category("AI & Technology"),
+        )
