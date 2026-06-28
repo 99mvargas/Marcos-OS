@@ -10,7 +10,12 @@ from models.recommendation import Recommendation
 _DIVIDER = "=" * 36
 
 
-def render_brief(brief: MorningBrief, knowledge_documents: int, executives_run: int) -> None:
+def render_brief(
+    brief: MorningBrief,
+    knowledge_documents: int,
+    executives_run: int,
+    recommendations_selected: int = 0,
+) -> None:
     """Render a MorningBrief to the console without requiring a service instance.
 
     Standalone function for use by callers that already hold the relevant
@@ -21,6 +26,8 @@ def render_brief(brief: MorningBrief, knowledge_documents: int, executives_run: 
         brief: The MorningBrief to render.
         knowledge_documents: Number of knowledge documents loaded this cycle.
         executives_run: Number of executives that ran this cycle.
+        recommendations_selected: Number of recommendations chosen by the
+            Chief of Staff Engine. When 0, the header line is omitted.
     """
     print(_DIVIDER)
     print("MARCOS OS")
@@ -28,6 +35,8 @@ def render_brief(brief: MorningBrief, knowledge_documents: int, executives_run: 
     print(_DIVIDER)
     print(f"Knowledge Documents: {knowledge_documents}")
     print(f"Executives: {executives_run}")
+    if recommendations_selected:
+        print(f"Recommendations Selected: {recommendations_selected}")
     print(f"Recommendations: {brief.total_recommendations}")
     print()
 
@@ -77,17 +86,26 @@ class MorningBriefService:
         self._context = context
         self._executive_engine = executive_engine
 
-    def generate(self) -> MorningBrief:
-        """Run the executive team and produce a MorningBrief.
+    def generate(
+        self, recommendations: list[Recommendation] | None = None
+    ) -> MorningBrief:
+        """Produce a MorningBrief from a recommendation list.
 
-        Executes all executives via the ExecutiveEngine, collects the
-        resulting recommendations, and constructs a MorningBrief with
-        a human-readable summary.
+        When recommendations are provided (e.g. the curated selection from
+        the Chief of Staff Engine), they are used directly. When None, the
+        executive engine is called to generate a fresh list. This fallback
+        preserves backward compatibility for callers that construct the
+        service without a preceding Chief of Staff stage.
+
+        Args:
+            recommendations: Pre-computed recommendation list, or None to
+                run the executive engine internally.
 
         Returns:
             A fully populated MorningBrief object.
         """
-        recommendations: list[Recommendation] = self._executive_engine.run()
+        if recommendations is None:
+            recommendations = self._executive_engine.run()
         total = len(recommendations)
 
         if total == 0:

@@ -55,32 +55,23 @@ class ContextProfileBuilder:
     def build_marriage_context(self) -> MarriageContext:
         """Build the context profile for the Marriage Executive.
 
-        Searches the Relationships and Home categories for Sara.md and
-        Household Operations.md respectively. Extracts love language text
-        from Sara.md when present.
+        Locates Sara.md by searching the Relationships vault category and
+        Household Operations.md by searching the Home vault category.
+        Extracts love language text from Sara.md when present.
 
         Returns:
             A populated MarriageContext.
         """
-        sara_results = self._engine.search("Sara.md")
-        sara_doc = _find(sara_results, "Sara.md")
+        relationship_docs = self._engine.get_documents_by_category("Relationships")
+        sara_doc = _find(relationship_docs, "Sara.md")
 
         love_language = ""
         if sara_doc is not None:
-            for line in sara_doc.content.splitlines():
-                stripped = line.strip()
-                # The line immediately following "# Love Language" in Sara.md
-                if stripped and stripped not in ("#", "# Love Language"):
-                    # Capture the first non-empty, non-heading content line
-                    # found after the love language heading.
-                    pass
-            # Extract by searching for the section directly.
-            content_lower = sara_doc.content.lower()
-            if "acts of service" in content_lower:
+            if "acts of service" in sara_doc.content.lower():
                 love_language = "Acts of Service"
 
-        household_results = self._engine.search("Household Operations")
-        household_doc = _find(household_results, "Household Operations.md")
+        home_docs = self._engine.get_documents_by_category("Home")
+        household_doc = _find(home_docs, "Household Operations.md")
 
         return MarriageContext(
             sara_doc=sara_doc,

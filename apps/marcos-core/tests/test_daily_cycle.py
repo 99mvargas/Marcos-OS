@@ -185,6 +185,51 @@ def test_daily_cycle_repeated_runs_are_independent() -> None:
 
 
 # ------------------------------------------------------------------
+# Regression tests — executive output must reach the Morning Brief
+# ------------------------------------------------------------------
+
+def test_daily_cycle_produces_recommendations_from_real_vault() -> None:
+    """MarriageExecutive produces recommendations when the real vault is loaded.
+
+    Regression guard: if ContextProfileBuilder fails to locate Sara.md via
+    the vault category index, sara_doc is None, MarriageExecutive returns [],
+    and this test fails — alerting the team before the regression ships.
+    """
+    result = _make_cycle().run()
+    assert result.total_recommendations > 0, (
+        "Expected at least one recommendation from the executive team. "
+        "MarriageExecutive should produce 3 when Sara.md and Household "
+        "Operations.md are loaded from the real vault."
+    )
+
+
+def test_daily_cycle_chief_of_staff_selects_recommendations() -> None:
+    """Chief of Staff Engine selects at least one recommendation from the real vault.
+
+    Regression guard: if recommendations are lost between the Executive Engine
+    and the Chief of Staff Engine, recommendations_selected will be 0 while
+    total_recommendations is positive — exposing the pipeline break.
+    """
+    result = _make_cycle().run()
+    assert result.recommendations_selected > 0, (
+        "Expected Chief of Staff Engine to select at least one recommendation. "
+        "Check that ChiefOfStaffEngine.run() receives the executive team output."
+    )
+    assert result.recommendations_selected == result.morning_brief.total_recommendations, (
+        "Morning Brief must contain the same count as Chief of Staff selected."
+    )
+
+
+def test_daily_cycle_chief_of_staff_result_populated() -> None:
+    """DailyCycleResult.chief_of_staff_result is populated after a full cycle run."""
+    from models.chief_of_staff_result import ChiefOfStaffResult
+    result = _make_cycle().run()
+    assert result.chief_of_staff_result is not None
+    assert isinstance(result.chief_of_staff_result, ChiefOfStaffResult)
+    assert result.chief_of_staff_result.total_received == result.total_recommendations
+
+
+# ------------------------------------------------------------------
 # Runner
 # ------------------------------------------------------------------
 
@@ -208,6 +253,9 @@ if __name__ == "__main__":
         test_daily_cycle_new_store_created_when_none_passed,
         test_daily_cycle_handles_empty_vault_gracefully,
         test_daily_cycle_repeated_runs_are_independent,
+        test_daily_cycle_produces_recommendations_from_real_vault,
+        test_daily_cycle_chief_of_staff_selects_recommendations,
+        test_daily_cycle_chief_of_staff_result_populated,
     ]
     for test in tests:
         test()

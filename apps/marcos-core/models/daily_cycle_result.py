@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from models.chief_of_staff_result import ChiefOfStaffResult
 from models.morning_brief import MorningBrief
 from models.recommendation import Recommendation
 
@@ -28,8 +29,15 @@ class DailyCycleResult:
         draft_memory_count: Number of DraftMemory objects in the MemoryStore
             at the end of the cycle.
         executives_run: Number of domain executives that were executed.
-        recommendations: Priority-sorted list of Recommendation objects
-            produced by the executive team.
+        recommendations: Priority-sorted list of all Recommendation objects
+            produced by the executive team before Chief of Staff selection.
+        chief_of_staff_result: The full output of the Chief of Staff Engine,
+            including selected recommendations, deferred items, groupings,
+            the daily mission, and reasoning. None if the cycle failed before
+            the Chief of Staff stage.
+        recommendations_selected: Count of recommendations chosen by the
+            Chief of Staff Engine for today's Morning Brief. Distinct from
+            total_recommendations (the raw executive output count).
         morning_brief: The MorningBrief generated at the end of the cycle.
             None if the cycle failed before the brief was produced.
         execution_time_ms: Total wall-clock execution time in milliseconds.
@@ -42,6 +50,8 @@ class DailyCycleResult:
     draft_memory_count: int = 0
     executives_run: int = 0
     recommendations: list[Recommendation] = field(default_factory=list)
+    chief_of_staff_result: ChiefOfStaffResult | None = None
+    recommendations_selected: int = 0
     morning_brief: MorningBrief | None = None
     execution_time_ms: float = 0.0
 

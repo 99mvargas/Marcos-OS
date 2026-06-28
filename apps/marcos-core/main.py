@@ -32,11 +32,12 @@ result = cycle.run()
 # ---------------------------------------------------------------------------
 # Print execution summary
 # ---------------------------------------------------------------------------
-print(f"Knowledge Documents: {result.knowledge_documents}")
-print(f"Draft Memory Objects: {result.draft_memory_count}")
-print(f"Executives Run:      {result.executives_run}")
-print(f"Recommendations:     {result.total_recommendations}")
-print(f"Execution Time:      {result.execution_time_ms:.0f} ms")
+print(f"Knowledge Documents:      {result.knowledge_documents}")
+print(f"Draft Memory Objects:     {result.draft_memory_count}")
+print(f"Executives Run:           {result.executives_run}")
+print(f"Recommendations (total):  {result.total_recommendations}")
+print(f"Recommendations (today):  {result.recommendations_selected}")
+print(f"Execution Time:           {result.execution_time_ms:.0f} ms")
 print(_DIVIDER)
 
 # ---------------------------------------------------------------------------
@@ -47,6 +48,7 @@ if result.morning_brief:
         brief=result.morning_brief,
         knowledge_documents=result.knowledge_documents,
         executives_run=result.executives_run,
+        recommendations_selected=result.recommendations_selected,
     )
 
 print(_DIVIDER)

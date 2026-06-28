@@ -10,18 +10,21 @@ Pipeline stages:
     2. Build Context    — index documents and build typed executive profiles
     3. Load Memory      — retrieve current Draft Memory count from MemoryStore
     4. Run Executives   — execute all domain executives; collect recommendations
-    5. Generate Brief   — produce the Morning Brief from executive output
-    6. Return Result    — assemble and return a DailyCycleResult
+    5. Chief of Staff   — curate recommendations; derive daily mission
+    6. Generate Brief   — produce the Morning Brief from the curated selection
+    7. Return Result    — assemble and return a DailyCycleResult
 """
 
 import time
 from datetime import datetime
 from pathlib import Path
 
+from core.chief_of_staff_engine import ChiefOfStaffEngine
 from core.context_engine import ContextEngine
 from core.executive_engine import ExecutiveEngine
 from core.knowledge_loader import load_knowledge
 from memory.memory_store import MemoryStore
+from models.chief_of_staff_result import ChiefOfStaffResult
 from models.daily_cycle_result import DailyCycleResult
 from models.draft_memory import DraftMemory
 from models.morning_brief import MorningBrief
@@ -50,9 +53,15 @@ class DailyExecutiveCycle:
     Attributes:
         _vault_path: Absolute path to the Obsidian knowledge vault.
         _store: The MemoryStore instance shared across the cycle.
+        _cos_engine: The ChiefOfStaffEngine instance used for curation.
     """
 
-    def __init__(self, vault_path: Path, store: MemoryStore | None = None) -> None:
+    def __init__(
+        self,
+        vault_path: Path,
+        store: MemoryStore | None = None,
+        cos_engine: ChiefOfStaffEngine | None = None,
+    ) -> None:
         """Initialise the DailyExecutiveCycle.
 
         Args:
@@ -60,14 +69,18 @@ class DailyExecutiveCycle:
             store: Optional MemoryStore instance. A new empty store is
                 created if None is provided. Pass an existing store to
                 preserve memory state across multiple cycle runs.
+            cos_engine: Optional ChiefOfStaffEngine instance. A default
+                engine is created if None is provided. Pass a configured
+                engine to use a non-default run mode (e.g. weekend).
         """
         self._vault_path = vault_path
         self._store = store or MemoryStore()
+        self._cos_engine = cos_engine or ChiefOfStaffEngine()
 
     def run(self) -> DailyCycleResult:
         """Execute the complete Marcos OS pipeline and return a result.
 
-        Runs all six pipeline stages sequentially. If any stage raises
+        Runs all seven pipeline stages sequentially. If any stage raises
         an unhandled exception, it propagates to the caller — no partial
         results are returned.
 
@@ -93,12 +106,19 @@ class DailyExecutiveCycle:
         recommendations: list[Recommendation] = executive_engine.run()
         result.recommendations = recommendations
 
-        # Stage 5 — Generate Morning Brief
+        # Stage 5 — Chief of Staff Engine
+        cos_result: ChiefOfStaffResult = self._cos_engine.run(recommendations)
+        result.chief_of_staff_result = cos_result
+        result.recommendations_selected = cos_result.total_selected
+
+        # Stage 6 — Generate Morning Brief
         brief_service = MorningBriefService(context, executive_engine)
-        brief: MorningBrief = brief_service.generate()
+        brief: MorningBrief = brief_service.generate(
+            recommendations=cos_result.selected
+        )
         result.morning_brief = brief
 
-        # Stage 6 — Finalise result
+        # Stage 7 — Finalise result
         result.completed_at = datetime.utcnow()
         elapsed_ns = time.perf_counter_ns() - start_ns
         result.execution_time_ms = elapsed_ns / 1_000_000
