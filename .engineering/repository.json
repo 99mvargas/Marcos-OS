@@ -1,0 +1,65 @@
+{
+  "apps": {
+    "marcos-dashboard": {
+      "path": "apps/marcos-dashboard/",
+      "type": "frontend",
+      "stack": ["React 19", "Vite", "Tailwind", "base-ui"],
+      "data_source": "mock",
+      "backend_wired": false,
+      "auth": false,
+      "database": false,
+      "status": "not confirmed running this session"
+    },
+    "marcos-api": {
+      "path": "apps/marcos-api/",
+      "type": "backend",
+      "stack": ["FastAPI"],
+      "storage": "json-file",
+      "endpoints": [
+        "GET /health",
+        "GET /finance/summary",
+        "POST /statements",
+        "GET /statements"
+      ],
+      "wired_to_dashboard": false,
+      "cors_configured": false,
+      "port": 8420,
+      "status": "not running (stopped after last verification)"
+    },
+    "marcos-core": {
+      "path": "apps/marcos-core/",
+      "type": "legacy",
+      "stack": ["Python"],
+      "status": "untouched, unrelated to marcos-api"
+    }
+  },
+  "infrastructure": {
+    "path": "docker/",
+    "services": {
+      "portainer": { "port": 9000, "status": "deployed, reachable" },
+      "jellyfin": { "port": 8096, "status": "deployed, reachable" },
+      "home_assistant": {
+        "port": 8123,
+        "containerized": false,
+        "status": "external, reachable",
+        "known_issue": "URL currently hardcoded"
+      }
+    }
+  },
+  "engineering_platform": {
+    "path": ".claude/",
+    "agents_dir": ".claude/agents/",
+    "skills_dir": ".claude/skills/",
+    "commands_ref": ".engineering/commands.json",
+    "workflows_ref": ".engineering/workflows.json",
+    "hooks_dir": ".claude/hooks/ (empty)",
+    "templates_dir": ".claude/templates/ (empty)"
+  },
+  "known_issues": [
+    "Home Assistant URL currently hardcoded.",
+    "Infrastructure Executive nav item routes to \"/\" (no dedicated Infrastructure page exists yet).",
+    "StatementParser is a placeholder (PlaceholderStatementParser) — no real extraction logic yet.",
+    "/finance/receipts and /development are placeholder pages with static content only.",
+    "apps/marcos-api is a greenfield backend, not yet wired to apps/marcos-dashboard (no CORS config, no client calls). apps/marcos-core remains untouched and unrelated."
+  ]
+}

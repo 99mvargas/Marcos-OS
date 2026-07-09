@@ -1,0 +1,45 @@
+{
+  "/startup": {
+    "file": ".claude/commands/startup.md",
+    "description": "Bring up local Marcos OS services needed for development, per .context/current.md.",
+    "skill": "repo-startup",
+    "reads": [".context/current.md (primary)", "HANDOFF.md + PROJECT_STATE.md (fallback if context file missing/stale)"],
+    "workflow": null
+  },
+  "/feature": {
+    "file": ".claude/commands/feature.md",
+    "description": "Implement the one approved feature currently defined in NEXT_TASK.md.",
+    "skill": "feature-implementation",
+    "reads": ["PROJECT_STATE.md", "NEXT_TASK.md", "docs/ENGINEERING_RULES.md"],
+    "workflow": "feature-workflow"
+  },
+  "/bug": {
+    "file": ".claude/commands/bug.md",
+    "description": "Diagnose and fix a single reported bug.",
+    "skill": null,
+    "reads": ["PROJECT_STATE.md (Known Issues)"],
+    "workflow": "bug-workflow"
+  },
+  "/review": {
+    "file": ".claude/commands/review.md",
+    "description": "Review the current diff for correctness bugs and security issues.",
+    "skill": ["code-review", "security-review (conditional)"],
+    "reads": ["current diff"],
+    "workflow": null
+  },
+  "/document": {
+    "file": ".claude/commands/document.md",
+    "description": "Sync PROJECT_STATE.md, HANDOFF.md, and NEXT_TASK.md with completed work.",
+    "skill": "documentation-update",
+    "reads": ["PROJECT_STATE.md", "HANDOFF.md", "NEXT_TASK.md"],
+    "workflow": null
+  },
+  "/handoff": {
+    "file": ".claude/commands/handoff.md",
+    "description": "Close out the current session — verify, document, and report.",
+    "skill": null,
+    "reads": ["acceptance criteria of the current task"],
+    "workflow": null,
+    "invokes_command": "/document"
+  }
+}

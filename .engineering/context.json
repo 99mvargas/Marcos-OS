@@ -1,0 +1,67 @@
+{
+  "sprint": {
+    "number": "020.5",
+    "name": "Repository Intelligence Pipeline",
+    "objective": "Implement the first executable Repository Intelligence pipeline: scripted facts -> context -> current.md generation, replacing manual skill-invoked regeneration."
+  },
+  "task": {
+    "summary": "Build .engineering/scripts/{generate.py,generate_facts.py,generate_context.py,generate_current_md.py}; split engineering state into generated facts.json and this hand-maintained decisions.json; regenerate context.json and current.md via script.",
+    "status": "complete"
+  },
+  "decisions_awaiting_approval": [
+    {
+      "topic": "Statement Parser real extraction approach (PDF parsing method)",
+      "owner": "Chief Systems Architect",
+      "detail_ref": "NEXT_TASK.md"
+    }
+  ],
+  "architecture_decisions": [
+    {
+      "decision": "context.json is generated entirely from facts.json + decisions.json; it is no longer hand-edited.",
+      "status": "decided",
+      "date": "2026-07-08"
+    },
+    {
+      "decision": "repository.json and executives.json remain separate, hand-maintained files for now; not merged into facts.json/decisions.json this sprint.",
+      "status": "deferred",
+      "owner": "Chief Systems Architect",
+      "date": "2026-07-08"
+    },
+    {
+      "decision": "decisions.json is the only human-maintained engineering-state file (sprint, task, outstanding decisions, next action, architecture decisions). All other .engineering/*.json content is either generated (facts.json, context.json) or a to-be-reviewed legacy hand-maintained file (repository.json, executives.json, workflows.json, commands.json, metrics.json).",
+      "status": "decided",
+      "date": "2026-07-08"
+    }
+  ],
+  "next_action": "Add live service-status probing (stdlib socket/HTTP, short timeout) to generate_facts.py so service up/down state becomes a generated fact instead of the hand-typed, easily-stale status strings currently in repository.json.",
+  "facts_summary": {
+    "apps": [
+      "marcos-api",
+      "marcos-core",
+      "marcos-dashboard"
+    ],
+    "api_endpoint_count": 4,
+    "dashboard_route_count": 8,
+    "docker_service_count": 2,
+    "service_registry_count": 3
+  },
+  "refs": {
+    "facts": ".engineering/facts.json",
+    "architecture": ".engineering/repository.json",
+    "executives": ".engineering/executives.json",
+    "workflows": ".engineering/workflows.json",
+    "commands": ".engineering/commands.json",
+    "metrics": ".engineering/metrics.json",
+    "full_state_markdown": [
+      "PROJECT_STATE.md",
+      "HANDOFF.md",
+      "NEXT_TASK.md"
+    ]
+  },
+  "generated_at": "2026-07-08T22:26:55.910906+00:00",
+  "generator_version": "1.0.0",
+  "sources": [
+    ".engineering/facts.json",
+    ".engineering/decisions.json"
+  ]
+}

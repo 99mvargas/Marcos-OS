@@ -1,0 +1,289 @@
+{
+  "apps": {
+    "marcos-dashboard": {
+      "path": "apps/marcos-dashboard/",
+      "type": "frontend",
+      "stack": [
+        "@base-ui/react",
+        "@fontsource-variable/geist",
+        "@tailwindcss/vite",
+        "@types/node",
+        "@types/react",
+        "@types/react-dom",
+        "@vitejs/plugin-react",
+        "class-variance-authority",
+        "clsx",
+        "lucide-react",
+        "motion",
+        "oxlint",
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "shadcn",
+        "sharp",
+        "tailwind-merge",
+        "tailwindcss",
+        "tw-animate-css",
+        "typescript",
+        "vite",
+        "vite-plugin-pwa"
+      ],
+      "stack_summary": "react, vite, tailwindcss, react-router-dom (+19 more)",
+      "routes": [
+        "/",
+        "/ai",
+        "/capture",
+        "/development",
+        "/finance",
+        "/finance/receipts",
+        "/finance/statement-vault",
+        "/system"
+      ]
+    },
+    "marcos-api": {
+      "path": "apps/marcos-api/",
+      "type": "backend",
+      "stack": [
+        "fastapi>=0.115",
+        "uvicorn[standard]>=0.32",
+        "python-multipart>=0.0.12"
+      ],
+      "stack_summary": "fastapi>=0.115, uvicorn[standard]>=0.32 (+1 more)",
+      "endpoints": [
+        "GET /finance/summary",
+        "GET /health",
+        "GET /statements",
+        "POST /statements"
+      ]
+    },
+    "marcos-core": {
+      "path": "apps/marcos-core/",
+      "type": "backend",
+      "stack": [],
+      "stack_summary": "no manifest found"
+    }
+  },
+  "docker_services": [
+    {
+      "name": "jellyfin",
+      "image": "jellyfin/jellyfin:latest",
+      "ports": [
+        "${JELLYFIN_PORT:-8096}:8096"
+      ],
+      "source": "docker/docker-compose.jellyfin.yml"
+    },
+    {
+      "name": "portainer",
+      "image": "portainer/portainer-ce:latest",
+      "ports": [
+        "${PORTAINER_PORT:-9000}:9000",
+        "${PORTAINER_HTTPS_PORT:-9443}:9443"
+      ],
+      "source": "docker/docker-compose.portainer.yml"
+    }
+  ],
+  "service_registry": [
+    {
+      "id": "home-assistant",
+      "name": "Home Assistant",
+      "url": "http://10.0.0.145:8123"
+    },
+    {
+      "id": "portainer",
+      "name": "Portainer",
+      "url": "http://10.0.0.47:9000"
+    },
+    {
+      "id": "jellyfin",
+      "name": "Jellyfin",
+      "url": "http://10.0.0.47:8096"
+    }
+  ],
+  "engineering_platform": {
+    "agents": [
+      "backend-engineer.md",
+      "chief-architect.md",
+      "documentation-engineer.md",
+      "finance-engineer.md",
+      "frontend-engineer.md",
+      "git-engineer.md",
+      "infrastructure-engineer.md",
+      "product-manager.md",
+      "qa-engineer.md",
+      "security-engineer.md"
+    ],
+    "skills": [
+      "architecture-review.md",
+      "backend-api.md",
+      "code-review.md",
+      "context-builder.md",
+      "documentation-update.md",
+      "feature-implementation.md",
+      "frontend-ui.md",
+      "repo-startup.md",
+      "security-review.md"
+    ],
+    "commands": [
+      "bug.md",
+      "document.md",
+      "feature.md",
+      "handoff.md",
+      "review.md",
+      "startup.md"
+    ]
+  },
+  "major_directories": [
+    {
+      "path": ".claude/",
+      "file_count": 30,
+      "has_readme": false
+    },
+    {
+      "path": ".context/",
+      "file_count": 1,
+      "has_readme": false
+    },
+    {
+      "path": ".engineering/",
+      "file_count": 12,
+      "has_readme": false
+    },
+    {
+      "path": ".github/",
+      "file_count": 1,
+      "has_readme": false
+    },
+    {
+      "path": "apps/",
+      "file_count": 151,
+      "has_readme": false
+    },
+    {
+      "path": "config/",
+      "file_count": 1,
+      "has_readme": false
+    },
+    {
+      "path": "database/",
+      "file_count": 1,
+      "has_readme": false
+    },
+    {
+      "path": "docker/",
+      "file_count": 4,
+      "has_readme": false
+    },
+    {
+      "path": "docs/",
+      "file_count": 2,
+      "has_readme": false
+    },
+    {
+      "path": "n8n/",
+      "file_count": 1,
+      "has_readme": false
+    },
+    {
+      "path": "obsidian/",
+      "file_count": 25,
+      "has_readme": false
+    },
+    {
+      "path": "prompts/",
+      "file_count": 1,
+      "has_readme": false
+    },
+    {
+      "path": "scripts/",
+      "file_count": 1,
+      "has_readme": false
+    },
+    {
+      "path": "specs/",
+      "file_count": 4,
+      "has_readme": false
+    }
+  ],
+  "code_markers": {
+    "placeholder_files": [
+      "apps/marcos-dashboard/src/features/finance/statement-vault/statement-parser.ts"
+    ],
+    "todo_count": 0,
+    "hardcoded_ip_urls": [
+      "http://10.0.0.145:8123",
+      "http://10.0.0.47:8096",
+      "http://10.0.0.47:9000"
+    ]
+  },
+  "generated_at": "2026-07-08T22:26:55.910454+00:00",
+  "generator_version": "1.0.0",
+  "sources": [
+    ".claude/agents",
+    ".claude/commands",
+    ".claude/skills",
+    "apps/marcos-api/app/__init__.py",
+    "apps/marcos-api/app/api/__init__.py",
+    "apps/marcos-api/app/api/finance.py",
+    "apps/marcos-api/app/api/health.py",
+    "apps/marcos-api/app/api/statements.py",
+    "apps/marcos-api/app/engines/__init__.py",
+    "apps/marcos-api/app/integrations/__init__.py",
+    "apps/marcos-api/app/main.py",
+    "apps/marcos-api/app/models/__init__.py",
+    "apps/marcos-api/app/models/finance.py",
+    "apps/marcos-api/app/models/statement.py",
+    "apps/marcos-api/app/services/__init__.py",
+    "apps/marcos-api/app/services/statement_storage_service.py",
+    "apps/marcos-api/app/storage/__init__.py",
+    "apps/marcos-api/app/storage/paths.py",
+    "apps/marcos-api/requirements.txt",
+    "apps/marcos-core/requirements.txt",
+    "apps/marcos-dashboard/package.json",
+    "apps/marcos-dashboard/src/App.tsx",
+    "apps/marcos-dashboard/src/api/dashboard.ts",
+    "apps/marcos-dashboard/src/components/layout/app-shell.tsx",
+    "apps/marcos-dashboard/src/components/layout/bottom-nav.tsx",
+    "apps/marcos-dashboard/src/components/layout/top-bar.tsx",
+    "apps/marcos-dashboard/src/components/ui/avatar.tsx",
+    "apps/marcos-dashboard/src/components/ui/badge.tsx",
+    "apps/marcos-dashboard/src/components/ui/button.tsx",
+    "apps/marcos-dashboard/src/components/ui/card.tsx",
+    "apps/marcos-dashboard/src/components/ui/progress.tsx",
+    "apps/marcos-dashboard/src/components/ui/scroll-area.tsx",
+    "apps/marcos-dashboard/src/components/ui/separator.tsx",
+    "apps/marcos-dashboard/src/components/ui/skeleton.tsx",
+    "apps/marcos-dashboard/src/data/mock/dashboard.ts",
+    "apps/marcos-dashboard/src/data/mock/finance.ts",
+    "apps/marcos-dashboard/src/data/mock/highest-roi.ts",
+    "apps/marcos-dashboard/src/data/service-registry.ts",
+    "apps/marcos-dashboard/src/features/development/development-summary-page.tsx",
+    "apps/marcos-dashboard/src/features/finance/finance-page.tsx",
+    "apps/marcos-dashboard/src/features/finance/statement-vault/statement-parser.ts",
+    "apps/marcos-dashboard/src/features/finance/statement-vault/statement-vault-page.tsx",
+    "apps/marcos-dashboard/src/features/home/components/action-card.tsx",
+    "apps/marcos-dashboard/src/features/home/components/action-center.tsx",
+    "apps/marcos-dashboard/src/features/home/components/builder-status-card.tsx",
+    "apps/marcos-dashboard/src/features/home/components/current-sprint-card.tsx",
+    "apps/marcos-dashboard/src/features/home/components/current-task-card.tsx",
+    "apps/marcos-dashboard/src/features/home/components/executives-nav.tsx",
+    "apps/marcos-dashboard/src/features/home/components/greeting.tsx",
+    "apps/marcos-dashboard/src/features/home/components/highest-roi-today.tsx",
+    "apps/marcos-dashboard/src/features/home/components/home-skeleton.tsx",
+    "apps/marcos-dashboard/src/features/home/components/infrastructure-section.tsx",
+    "apps/marcos-dashboard/src/features/home/components/quick-actions.tsx",
+    "apps/marcos-dashboard/src/features/home/components/recent-activity.tsx",
+    "apps/marcos-dashboard/src/features/home/components/todays-focus.tsx",
+    "apps/marcos-dashboard/src/features/home/home-page.tsx",
+    "apps/marcos-dashboard/src/features/placeholder/coming-soon.tsx",
+    "apps/marcos-dashboard/src/hooks/use-dashboard-snapshot.ts",
+    "apps/marcos-dashboard/src/hooks/use-theme.tsx",
+    "apps/marcos-dashboard/src/lib/format.ts",
+    "apps/marcos-dashboard/src/lib/utils.ts",
+    "apps/marcos-dashboard/src/main.tsx",
+    "apps/marcos-dashboard/src/types/dashboard.ts",
+    "apps/marcos-dashboard/src/types/finance.ts",
+    "docker",
+    "docker/docker-compose.jellyfin.yml",
+    "docker/docker-compose.portainer.yml"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "active": [
+    {
+      "name": "Home",
+      "domain": "Home life and household management",
+      "implementation": ["Executive navigation entry"]
+    },
+    {
+      "name": "Finance",
+      "domain": "Marcos's finances",
+      "implementation": [
+        "Statement Vault v1",
+        "Statement Parser v1 (architecture only, PlaceholderStatementParser)",
+        "Action Center v1",
+        "apps/marcos-api finance endpoints (GET /finance/summary, POST /statements, GET /statements)"
+      ]
+    },
+    {
+      "name": "Infrastructure",
+      "domain": "Home infrastructure and self-hosted services",
+      "implementation": [
+        "Infrastructure Dashboard",
+        "Service Registry v1",
+        "nav item routes to \"/\" — no dedicated Infrastructure page yet"
+      ]
+    }
+  ],
+  "planned": ["Business", "Purchasing", "Knowledge", "Health", "Identity"],
+  "shared_engines": [
+    {
+      "name": "Timeline Engine",
+      "purpose": "Single chronological thread of what happened, across every Executive.",
+      "status": "not_implemented"
+    },
+    {
+      "name": "Recommendation Engine",
+      "purpose": "Shared mechanism by which any Executive's analysis becomes a ranked, explained recommendation.",
+      "status": "not_implemented"
+    },
+    {
+      "name": "Decision Engine",
+      "purpose": "Record of decisions Marcos has made or is being asked to make.",
+      "status": "not_implemented"
+    },
+    {
+      "name": "Memory Engine",
+      "purpose": "Durable record of what is true about Marcos's life and work.",
+      "status": "not_implemented"
+    },
+    {
+      "name": "Integration Framework",
+      "purpose": "Shared seam through which Executives connect to external systems and data sources.",
+      "status": "not_implemented"
+    },
+    {
+      "name": "Goal Engine",
+      "purpose": "Tracks what Marcos is working toward in any domain and whether today's actions help.",
+      "status": "not_implemented"
+    }
+  ],
+  "principles": {
+    "executive_independence": "Executives do not reach into one another's data; each owns its own data, integrations, analysis, recommendations, and actions.",
+    "human_control": "AI advises, and never acts autonomously on high-risk decisions — financial transfers, irreversible changes, and anything with real-world consequence always require explicit human approval."
+  },
+  "source": "VISION.md"
+}

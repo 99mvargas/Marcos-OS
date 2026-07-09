@@ -1,0 +1,29 @@
+{
+  "token_savings": [
+    {
+      "sprint": 19,
+      "optimization": "/startup reads .context/current.md instead of HANDOFF.md + PROJECT_STATE.md in full",
+      "before_chars": 7385,
+      "after_chars": 1921,
+      "before_tokens_est": 1846,
+      "after_tokens_est": 480,
+      "reduction_pct": 74,
+      "method": "chars / 4 token estimate"
+    },
+    {
+      "sprint": 20,
+      "optimization": "Current-state lookups read .engineering/context.json instead of parsing PROJECT_STATE.md + HANDOFF.md + NEXT_TASK.md",
+      "before_chars": 9912,
+      "after_chars": 1051,
+      "before_tokens_est": 2478,
+      "after_tokens_est": 263,
+      "reduction_pct": 89,
+      "method": "chars / 4 token estimate",
+      "note": "context.json stays small by referencing repository.json/executives.json/workflows.json/commands.json instead of inlining their data; those are only read when a task actually needs that detail."
+    }
+  ],
+  "notes": [
+    "Estimates use a 4-characters-per-token heuristic, not an actual tokenizer count.",
+    "Savings apply to routine current-state lookups (sprint/task/decisions/next action). Tasks needing full acceptance criteria, full known-issues detail, or full architecture rationale still read the relevant source file(s) directly."
+  ]
+}
