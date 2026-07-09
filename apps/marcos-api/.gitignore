@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+data/statements/*
+!data/statements/.gitkeep
+data/financial-records/*
+!data/financial-records/.gitkeep
+data/recommendations/*
+!data/recommendations/.gitkeep
+data/settings/*
+!data/settings/.gitkeep
