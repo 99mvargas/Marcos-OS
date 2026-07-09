@@ -1,0 +1,26 @@
+services:
+  marcos-api:
+    build:
+      context: ../apps/marcos-api
+    container_name: marcos-api
+    restart: unless-stopped
+    # Fixed host port: the dashboard's browser-side JS resolves the API at
+    # `${window.location.hostname}:8420`, so this can't be remapped without
+    # also changing that hardcoded port in the frontend source.
+    ports:
+      - "8420:8420"
+    volumes:
+      - marcos_api_data:/app/data
+
+  marcos-dashboard:
+    build:
+      context: ../apps/marcos-dashboard
+    container_name: marcos-dashboard
+    restart: unless-stopped
+    ports:
+      - "${MARCOS_DASHBOARD_PORT:-8080}:80"
+    depends_on:
+      - marcos-api
+
+volumes:
+  marcos_api_data:
