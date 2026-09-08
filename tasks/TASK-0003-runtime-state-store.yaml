@@ -1,0 +1,135 @@
+task_id: TASK-0003-runtime-state-store
+objective: >
+  Implement the smallest production-quality foundation for the autonomous
+  runtime designed in TASK-0002: the PostgreSQL operational state store
+  (tasks, task_events, agent_invocations, human_required_queue,
+  checkpoints) plus AI invocation cost/token observability, as plain SQL
+  migrations and a thin typed access layer. Does not implement the n8n
+  Orchestrator or any Claude/OpenAI invocation -- those are TASK-0004/0005.
+
+status: CHECKPOINT
+
+assigned_agent: Builder
+
+priority: P0
+
+requirements:
+  - Inspect docs/RUNTIME_ARCHITECTURE.md, docs/AUTONOMOUS_AGENT_PROTOCOL.md,
+    docs/AGENT_ROLES.md, BUILD_STATE.md, apps/marcos-api, existing Docker
+    Compose config, existing task schemas, and .claude configuration before
+    changing anything.
+  - Every agent_invocations row must record at minimum invocation_id,
+    task_id, role, provider, model, input_tokens, output_tokens,
+    total_tokens, estimated_cost, duration_ms, status, retry_count,
+    timestamp.
+  - Deterministic operations (claiming, locking, lease sweeps, cost math,
+    event logging, git operations) must never consume an LLM call.
+  - Support targeted context selection -- no full-repository dump to
+    agents by default.
+  - Allow future model selection to pick the lowest-cost model capable of
+    a task.
+  - Add PostgreSQL using the smallest maintainable implementation
+    consistent with TASK-0002 (docs/RUNTIME_ARCHITECTURE.md section 6/20).
+  - Add versioned, forward-only SQL migrations (no ORM unless justified --
+    none was).
+  - Implement the five task/runtime tables from TASK-0002 section 6.
+  - Add indexes and constraints for atomic task claiming, leases,
+    idempotency, and auditability.
+  - Do not migrate unrelated finance, Home Assistant, or existing
+    application data.
+  - Do not redesign TASK-0002.
+  - Do not implement the complete n8n orchestrator.
+  - Do not implement Claude/OpenAI invocation.
+  - Do not modify Proxmox, Home Assistant, network configuration, or
+    unrelated production services.
+  - Never expose or commit credentials/secrets.
+  - Do not merge into main.
+  - Write docs/TOKEN_EFFICIENCY.md covering token sources, minimization
+    rules, model-selection rules, retry limits, budgets, required
+    telemetry, context-retrieval guidance, cost auditing, and waste
+    detection.
+
+architecture_reference:
+  - docs/RUNTIME_ARCHITECTURE.md#6-postgresql-data-model-proposal
+  - docs/RUNTIME_ARCHITECTURE.md#20-deployment-architecture-on-the-builder-vm
+  - docs/AUTONOMOUS_AGENT_PROTOCOL.md#10-safety-boundaries
+  - docs/TOKEN_EFFICIENCY.md
+  - database/README.md
+
+files_changed:
+  - database/migrations/0001_create_tasks.sql (new)
+  - database/migrations/0002_create_task_events.sql (new)
+  - database/migrations/0003_create_agent_invocations.sql (new)
+  - database/migrations/0004_create_human_required_queue.sql (new)
+  - database/migrations/0005_create_checkpoints.sql (new)
+  - database/migrate.py (new -- forward-only migration runner, no framework)
+  - database/requirements.txt (new)
+  - database/README.md (new)
+  - apps/marcos-api/app/db/__init__.py (new)
+  - apps/marcos-api/app/db/connection.py (new)
+  - apps/marcos-api/app/db/models.py (new -- typed Pydantic row models)
+  - apps/marcos-api/app/db/cost.py (new -- token/cost estimation, verified
+    Anthropic pricing table)
+  - apps/marcos-api/app/db/tasks_repo.py (new -- atomic claim, lease
+    sweep, event logging)
+  - apps/marcos-api/app/db/invocations_repo.py (new -- invocation
+    token/cost telemetry)
+  - apps/marcos-api/app/db/human_queue_repo.py (new)
+  - apps/marcos-api/app/db/checkpoints_repo.py (new)
+  - apps/marcos-api/requirements.txt (updated -- add psycopg[binary])
+  - docker/docker-compose.marcos-os.yml (updated -- marcos-tasks-db service
+    definition, new named volume; not started)
+  - docker/.env.example (updated -- documented, non-secret var names only)
+  - docs/TOKEN_EFFICIENCY.md (new)
+  - docs/DECISIONS.md (updated -- DEC-009)
+  - BUILD_STATE.md (updated)
+  - CHANGELOG.md (updated)
+  - tasks/TASK-0003-runtime-state-store.yaml (new, this file)
+
+tests:
+  - command: "python3 database/migrate.py --check && python3 database/migrate.py (against a throwaway, ephemeral postgres:16-alpine container -- not the persistent marcos-tasks-db service, torn down immediately after)"
+    result: PASS
+    ran_at: 2026-09-08T00:00:00Z
+  - command: "python3 database/migrate.py (re-run after apply, idempotency check)"
+    result: "PASS -- reported 'Up to date: 5 migration(s) already applied', no re-apply"
+    ran_at: 2026-09-08T00:00:00Z
+  - command: "psql \\dt / \\d tasks against the ephemeral instance -- verified all 5 tables, indexes, CHECK/FK/UNIQUE constraints, and the append-only triggers exist as designed"
+    result: PASS
+    ran_at: 2026-09-08T00:00:00Z
+  - command: "One-off validation script exercising apps/marcos-api/app/db/*.py against the ephemeral instance: atomic claim + no double-dispatch under a second claimant, task_events append-only trigger rejects UPDATE, agent_invocations token/cost math matches the pricing table exactly, cost_by_task aggregation, human_required_queue raise/list/resolve lifecycle, checkpoints UNIQUE(commit_sha) idempotency, lease-expiry sweep releases an expired lock, tasks_status_check CHECK constraint rejects an invalid status"
+    result: "PASS -- 15/15 checks passed"
+    ran_at: 2026-09-08T00:00:00Z
+  - command: "python3 -m py_compile database/migrate.py apps/marcos-api/app/db/*.py"
+    result: PASS
+    ran_at: 2026-09-08T00:00:00Z
+  - command: "python3 -c \"from app.db import connection, models, cost, tasks_repo, invocations_repo, human_queue_repo, checkpoints_repo\" (import sanity check)"
+    result: PASS
+    ran_at: 2026-09-08T00:00:00Z
+  - command: "grep for credential/secret patterns across all new/changed files"
+    result: "PASS -- clean; docker/.env.example documents variable names only, real values go in docker/.env (gitignored, not touched)"
+    ran_at: 2026-09-08T00:00:00Z
+
+blockers:
+  - "Not a blocker for this task's own completion (code/schema/docs are done and checkpointed), but flagged for the next infrastructure-touching step: the marcos-tasks-db container defined in docker/docker-compose.marcos-os.yml has not been started. Per docs/AUTONOMOUS_AGENT_PROTOCOL.md#10 (Safety Boundaries), starting/restarting a Docker service is an infrastructure change requiring HUMAN APPROVAL, not an autonomous or checkpoint-level action -- this was validated instead against a fully ephemeral, throwaway container. TASK-0004 (headless Claude Code invocation contract) and TASK-0005 (n8n Orchestrator) cannot run against a live instance until a human explicitly approves starting this service."
+
+decisions:
+  - docs/DECISIONS.md#DEC-009
+
+checkpoint:
+  branch: checkpoint/TASK-0003-runtime-state-store-v1
+  commit: null
+  pushed: false
+  validated: true
+  build_state_updated: true
+  changelog_updated: true
+
+human_required: false
+human_action: null
+
+next_agent: Chairman
+
+timestamps:
+  created: 2026-09-08T16:00:00Z
+  updated: 2026-09-08T16:00:00Z
+  started: 2026-09-08T16:00:00Z
+  completed: null

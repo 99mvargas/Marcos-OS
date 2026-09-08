@@ -22,5 +22,28 @@ services:
     depends_on:
       - marcos-api
 
+  # Autonomous Agent Protocol runtime state store (TASK-0003,
+  # docs/RUNTIME_ARCHITECTURE.md §6, §20). A new, isolated database --
+  # it does not touch marcos-api's existing JSON-file storage and holds
+  # only the five tables in database/migrations/. Per
+  # docs/AUTONOMOUS_AGENT_PROTOCOL.md §10, starting/restarting this
+  # service is an infrastructure change requiring human approval; this
+  # definition is not brought up automatically by any checkpoint.
+  # Bound to localhost only (not 0.0.0.0) -- matches
+  # docs/RUNTIME_ARCHITECTURE.md §21 ("no new inbound ports required").
+  marcos-tasks-db:
+    image: postgres:16-alpine
+    container_name: marcos-tasks-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MARCOS_TASKS_DB_NAME:-marcos_tasks}
+      POSTGRES_USER: ${MARCOS_TASKS_DB_USER:-marcos_tasks}
+      POSTGRES_PASSWORD: ${MARCOS_TASKS_DB_PASSWORD:?set in docker/.env, never committed}
+    ports:
+      - "127.0.0.1:${MARCOS_TASKS_DB_PORT:-5433}:5432"
+    volumes:
+      - marcos_tasks_db_data:/var/lib/postgresql/data
+
 volumes:
   marcos_api_data:
+  marcos_tasks_db_data:

@@ -166,3 +166,44 @@ Format per entry: date, decision, status (`decided` / `deferred` /
   live instance, but doubles operational surface for a risk that narrow
   credential scoping already mitigates. See `docs/RUNTIME_ARCHITECTURE.md`
   §19, §22, §23, §26.
+
+## DEC-009 — Implement the runtime state store as plain SQL migrations + a thin psycopg access layer; define but do not start the Postgres container
+
+- **Date:** 2026-09-08
+- **Status:** decided
+- **Owner:** Builder (Claude Code)
+- **Decision:** TASK-0003 implements the five tables from
+  `docs/RUNTIME_ARCHITECTURE.md` §6 (`tasks`, `task_events`,
+  `agent_invocations`, `human_required_queue`, `checkpoints`) as
+  hand-written, forward-only SQL files in `database/migrations/`, applied
+  by a ~100-line runner (`database/migrate.py`) with no ORM and no
+  migration framework (no Alembic/Flyway). The Python access layer
+  (`apps/marcos-api/app/db/`) is plain `psycopg` (v3) with typed Pydantic
+  row models, matching this repo's existing `apps/marcos-api` conventions
+  rather than introducing a second Python data-access pattern.
+  `docker/docker-compose.marcos-os.yml` gains a `marcos-tasks-db` service
+  definition (new, isolated container + named volume, localhost-only port)
+  as recommended in `docs/RUNTIME_ARCHITECTURE.md` §20 — but per
+  `docs/AUTONOMOUS_AGENT_PROTOCOL.md` §10 ("Infrastructure changes... Docker"
+  is `HUMAN APPROVAL`, not autonomous), the service is defined as code
+  only and was not started as part of this checkpoint. This store is
+  narrowly scoped to the Autonomous Agent Protocol's runtime state; it
+  does not migrate, replace, or fulfill the separate, pre-existing
+  "Sprint 011 PostgreSQL Integration" plan for `apps/marcos-core`'s memory
+  system (`ROADMAP.md`, `apps/marcos-core/README.md`) — that remains a
+  distinct future task with its own schema and its own decision to make.
+- **Rationale:** The schema is small (five tables, no joins beyond a
+  shared `task_id` foreign key) and forward-only migrations are simpler to
+  reason about than a framework's migration DSL for this size of project —
+  consistent with `docs/RUNTIME_ARCHITECTURE.md`'s own "small, no ORM
+  framework required" scope for this store and the prompt's "don't add an
+  ORM unless clearly justified" instruction. Standing up the actual
+  database container is a genuine infrastructure action on the Builder
+  VM (a new persistent service, new inbound port, new credential) — the
+  protocol's own safety-boundary table puts that in `HUMAN APPROVAL`, not
+  `AUTONOMOUS`/`CHECKPOINT`, regardless of how detailed the commissioning
+  task was. Migrations and the access layer were instead validated against
+  a fully ephemeral, throwaway Postgres container (not part of the
+  `docker-compose.marcos-os.yml` stack, torn down immediately after
+  validation) — this is "running tests / local builds," which the same
+  table marks `AUTONOMOUS`.
