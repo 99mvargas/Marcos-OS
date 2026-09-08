@@ -1,0 +1,84 @@
+task_id: TASK-0002-autonomous-agent-runtime
+objective: >
+  Design the practical, secure, resumable runtime architecture that makes
+  the Autonomous Agent Protocol v1.0 (TASK-0001) operational -- the
+  division of responsibility between GitHub, PostgreSQL, n8n, Claude Code,
+  and OpenAI/ChatGPT, the invocation/communication/retry/security model,
+  and an implementation sequence. Research and architecture only; no
+  runtime, database, n8n workflow, or infrastructure implemented.
+
+status: CHECKPOINT
+
+assigned_agent: Builder
+
+priority: P0
+
+requirements:
+  - Inspect the current repository, the TASK-0001 checkpoint branch, and
+    (read-only) the live n8n instance before proposing anything.
+  - Evaluate the correct division of responsibility across GitHub,
+    PostgreSQL, n8n, Claude Code, OpenAI/ChatGPT, MCP, the Builder VM,
+    Home Assistant, and Obsidian -- do not assume GitHub YAML remains the
+    live runtime database.
+  - Decide explicitly whether ChatGPT/Architect participation should be
+    synchronous (app-based) or API-backed, and justify the answer.
+  - Decide explicitly whether the long-term design should support multiple
+    AI providers, and to what extent, without overbuilding now.
+  - Produce all 26 required deliverable sections (current-state assessment
+    through risks/mitigations).
+  - Define least-privilege security, authn/authz, audit, and safety-
+    boundary enforcement for every new component.
+  - Do not modify n8n, Docker, Proxmox, Home Assistant, networking,
+    credentials, or production services.
+  - Do not merge into main.
+  - Do not delete or contradict existing documentation; identify and
+    resolve any conflicts explicitly.
+  - Do not falsely mark this task COMPLETED if implementation had begun --
+    it has not; this task is documentation/architecture only.
+
+architecture_reference:
+  - docs/RUNTIME_ARCHITECTURE.md
+  - docs/AUTONOMOUS_AGENT_PROTOCOL.md
+  - docs/AGENT_ROLES.md
+  - docs/CHECKPOINTS.md
+  - ARCHITECTURE.md
+  - VISION.md
+
+files_changed:
+  - docs/RUNTIME_ARCHITECTURE.md (new -- the full architecture proposal)
+  - tasks/TASK-0002-autonomous-agent-runtime.yaml (new, this file)
+  - BUILD_STATE.md (updated -- current task pointer and protocol status)
+  - CHANGELOG.md (updated -- milestone entry)
+  - "docs/DECISIONS.md (updated -- proposed decisions DEC-006..DEC-008,
+    status proposed, awaiting Chairman approval)"
+
+tests:
+  - command: "Documentation/architecture-only milestone: no test suite applies. Validated via internal cross-reference check against docs/AUTONOMOUS_AGENT_PROTOCOL.md, docs/AGENT_ROLES.md, and docs/CHECKPOINTS.md, and by confirming no infrastructure, credential, or main-branch changes are present in the diff."
+    result: PASS
+    ran_at: 2026-09-08T00:00:00Z
+
+blockers: []
+
+decisions:
+  - docs/DECISIONS.md#DEC-006
+  - docs/DECISIONS.md#DEC-007
+  - docs/DECISIONS.md#DEC-008
+
+checkpoint:
+  branch: checkpoint/TASK-0002-autonomous-agent-runtime-v1
+  commit: null
+  pushed: false
+  validated: true
+  build_state_updated: true
+  changelog_updated: true
+
+human_required: false
+human_action: null
+
+next_agent: Chairman
+
+timestamps:
+  created: 2026-09-08T15:00:00Z
+  updated: 2026-09-08T15:40:00Z
+  started: 2026-09-08T15:00:00Z
+  completed: null

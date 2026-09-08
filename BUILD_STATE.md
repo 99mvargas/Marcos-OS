@@ -15,32 +15,54 @@ both currently exist.
 ## Protocol Status
 
 - **Autonomous Agent Protocol:** v1.0 adopted (documentation/architecture
-  milestone). Orchestration (n8n as Orchestrator) is designed but **not
-  implemented**.
+  milestone, TASK-0001). Orchestration (n8n as Orchestrator) is now fully
+  **designed** (`docs/RUNTIME_ARCHITECTURE.md`, TASK-0002) but still **not
+  implemented** — no Postgres, n8n workflow, or headless Claude Code
+  invocation exists yet. Implementation is sequenced as TASK-0003 through
+  TASK-0007 (see `docs/RUNTIME_ARCHITECTURE.md` §22), each requiring
+  separate Chairman approval before starting.
 - **Active tasks:** see `tasks/*.yaml`.
 
 ## Current Task
 
-- **ID:** `TASK-0001-autonomous-agent-protocol-bootstrap`
-- **Status:** `COMPLETED`
+- **ID:** `TASK-0002-autonomous-agent-runtime`
+- **Status:** `CHECKPOINT`
 - **Assigned agent:** Builder (Claude Code)
-- **Objective:** Design and document the Autonomous Agent Protocol v1.0.
+- **Objective:** Design the practical, secure, resumable runtime
+  architecture (PostgreSQL + n8n + Claude Code + OpenAI API) that makes the
+  Autonomous Agent Protocol v1.0 operable. Research/architecture only — no
+  runtime, database, n8n workflow, or infrastructure implemented.
 - **Human action required:** No.
-- **Next agent:** Chairman (review and accept the milestone).
+- **Next agent:** Chairman (review the proposal and the three open
+  decisions, DEC-006 through DEC-008).
+
+## Previous Task
+
+- **ID:** `TASK-0001-autonomous-agent-protocol-bootstrap`
+- **Status:** `COMPLETED` — see
+  `checkpoint/TASK-0001-autonomous-agent-protocol-v1`.
 
 ## What Changed This Checkpoint
 
-- Added `docs/AUTONOMOUS_AGENT_PROTOCOL.md`, `docs/AGENT_ROLES.md`,
-  `docs/CHECKPOINTS.md`, `docs/DECISIONS.md`.
-- Added `tasks/` (task schema, template, and this milestone's own task
-  record).
-- Added this file, `BUILD_STATE.md`, as the new authoritative snapshot.
-- Updated `CLAUDE.md`, `CONTRIBUTING.md`, `DEVELOPMENT_GUIDE.md`, and
-  `.claude/agents/git-engineer.md` to point to / reconcile with the new
-  protocol (see `docs/DECISIONS.md` for what changed and why).
-- Updated `README.md` documentation table and `CHANGELOG.md`.
+- Added `docs/RUNTIME_ARCHITECTURE.md` — the full TASK-0002 runtime
+  architecture proposal (current-state assessment, target architecture,
+  PostgreSQL data model, GitHub/n8n/Claude Code/OpenAI responsibility
+  split, MCP architecture, auth model, lifecycle, retry/failure recovery,
+  HUMAN_REQUIRED mechanism, security model, deployment, implementation
+  sequence, rejected alternatives, cost, and risks).
+- Added `tasks/TASK-0002-autonomous-agent-runtime.yaml`.
+- Recorded `docs/DECISIONS.md#DEC-006` (PostgreSQL as the live-state
+  store), `#DEC-007` (n8n as deterministic Orchestrator; Architect/
+  Chairman-assist as unattended OpenAI API calls, not a synchronous
+  ChatGPT app session), and `#DEC-008` (defer multi-provider abstraction,
+  no second n8n instance for v1) — all `proposed`, awaiting Chairman
+  approval.
+- Updated `CHANGELOG.md`.
 - No application code, infrastructure, Docker, n8n, Home Assistant,
-  Proxmox, networking, or credentials were touched.
+  Proxmox, networking, or credentials were touched. (The working tree
+  separately has local, uncommitted changes under `docker/jellyfin-*/`
+  from the running Jellyfin container's own runtime state files —
+  unrelated to this checkpoint and intentionally left uncommitted.)
 
 ## Repository Architecture Snapshot
 
@@ -69,12 +91,15 @@ checkpoint that touches application code._
 
 ## Next Action
 
-Await Chairman review/acceptance of the Autonomous Agent Protocol v1.0
-milestone (`TASK-0001`). No further implementation begins until a new task
-is approved (`status: READY`) — per this task's scope, the Google Calendar
-assistant work is explicitly deferred to a future task.
+Await Chairman review of the TASK-0002 runtime architecture proposal and a
+decision on `DEC-006`–`DEC-008` (PostgreSQL as live-state store, n8n as
+deterministic Orchestrator with API-backed Architect/Chairman-assist, and
+deferring multi-provider support). No implementation task (`TASK-0003`
+onward, per `docs/RUNTIME_ARCHITECTURE.md` §22) begins until approved
+(`status: READY`) individually — per this task's scope, the Google
+Calendar assistant work remains deferred to a future task.
 
 ---
 
 _Last updated: 2026-09-08 by Claude Code (Builder), checkpoint
-`checkpoint/TASK-0001-autonomous-agent-protocol-v1`._
+`checkpoint/TASK-0002-autonomous-agent-runtime-v1`._
