@@ -29,7 +29,7 @@ both currently exist.
 ## Current Task
 
 - **ID:** `TASK-0003-runtime-state-store`
-- **Status:** `CHECKPOINT`
+- **Status:** `COMPLETED`
 - **Assigned agent:** Builder (Claude Code)
 - **Objective:** Implement the PostgreSQL operational state store (five
   tables from `docs/RUNTIME_ARCHITECTURE.md` §6) plus AI invocation

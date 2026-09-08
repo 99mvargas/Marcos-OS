@@ -7,7 +7,7 @@ objective: >
   migrations and a thin typed access layer. Does not implement the n8n
   Orchestrator or any Claude/OpenAI invocation -- those are TASK-0004/0005.
 
-status: CHECKPOINT
+status: COMPLETED
 
 assigned_agent: Builder
 
@@ -117,8 +117,8 @@ decisions:
 
 checkpoint:
   branch: checkpoint/TASK-0003-runtime-state-store-v1
-  commit: null
-  pushed: false
+  commit: 680e771
+  pushed: true
   validated: true
   build_state_updated: true
   changelog_updated: true
@@ -130,6 +130,6 @@ next_agent: Chairman
 
 timestamps:
   created: 2026-09-08T16:00:00Z
-  updated: 2026-09-08T16:00:00Z
+  updated: 2026-09-08T16:20:00Z
   started: 2026-09-08T16:00:00Z
-  completed: null
+  completed: 2026-09-08T16:20:00Z
