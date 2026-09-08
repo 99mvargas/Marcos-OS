@@ -25,6 +25,10 @@ It is not a computer operating system. It is a personal intelligence layer that 
 | [`ROADMAP.md`](ROADMAP.md) | Sprint history, upcoming sprints, technical debt |
 | [`MISSION.md`](MISSION.md) | The purpose and values behind Marcos OS |
 | [`CHANGELOG.md`](CHANGELOG.md) | Version history |
+| [`BUILD_STATE.md`](BUILD_STATE.md) | Authoritative implementation-state snapshot (Autonomous Agent Protocol) |
+| [`docs/AUTONOMOUS_AGENT_PROTOCOL.md`](docs/AUTONOMOUS_AGENT_PROTOCOL.md) | How ChatGPT, Claude Code, n8n, and GitHub collaborate through shared state |
+| [`docs/AGENT_ROLES.md`](docs/AGENT_ROLES.md) | Formal agent role definitions (Chairman, Architect, Researcher, Builder, Reviewer, Tester, Orchestrator) |
+| [`docs/CHECKPOINTS.md`](docs/CHECKPOINTS.md) | What a checkpoint is and the procedure for reaching one |
 
 ---
 

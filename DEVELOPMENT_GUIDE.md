@@ -155,11 +155,17 @@ There is no release schedule. Sprints advance when Marcos decides to advance the
 
 ## Branch Strategy
 
-The repository does not currently use branches.
+**Superseded 2026-09-08 by the Autonomous Agent Protocol v1.0** — see
+`docs/AUTONOMOUS_AGENT_PROTOCOL.md` §7 and `docs/CHECKPOINTS.md` for the
+current, authoritative branch strategy (`docs/DECISIONS.md#DEC-004`).
 
-All work is committed directly to the main branch during the foundation phase.
-
-When the repository has active external integrations (PostgreSQL, Telegram), a branch strategy will be introduced. Until then, the main branch is always the working state.
+Historical note: through Sprint ~020, all work was committed directly to
+`main` ("the repository does not currently use branches"). That convention
+no longer applies. In summary, under the current protocol: Claude Code may
+autonomously create work branches (`agent/<role>/<task_id>-<slug>`) and
+checkpoint branches (`checkpoint/<task_id>-<slug>`), and commit/push them,
+but never merges into `main` without explicit authorization from the
+Chairman or Repository Owner.
 
 ---
 

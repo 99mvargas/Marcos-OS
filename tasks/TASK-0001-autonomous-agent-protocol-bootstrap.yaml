@@ -1,0 +1,89 @@
+task_id: TASK-0001-autonomous-agent-protocol-bootstrap
+objective: >
+  Design and document the Marcos OS Autonomous Agent Protocol v1.0 -- formal
+  roles, shared task-state schema, checkpoint system, git workflow, human
+  interruption protocol, and safety boundaries -- so agents can hand off
+  work through GitHub instead of through Marcos relaying messages between
+  them. Documentation/architecture only; no application code, infrastructure,
+  or orchestration implemented.
+
+status: CHECKPOINT
+
+assigned_agent: Builder
+
+priority: P0
+
+requirements:
+  - Inspect the existing repository and preserve current architecture/docs.
+  - Define 7 formal roles (Chairman, Architect, Researcher, Builder,
+    Reviewer, Tester, Orchestrator) with responsibilities, allowed/prohibited
+    actions, inputs, outputs, handoff conditions.
+  - Define a machine-readable task/checkpoint schema and lifecycle.
+  - Define the checkpoint system (9-step procedure).
+  - Define a safe git workflow (branch naming, no autonomous merge to main).
+  - Define the human interruption protocol and schema.
+  - Define safety boundaries across read-only/reversible/repo/infra/
+    production/destructive/external-side-effect categories.
+  - Define the quality control / adversarial review process.
+  - Describe (but do not implement) the future n8n orchestration flow.
+  - Consolidate with existing docs rather than duplicating them.
+  - No Docker, n8n, Home Assistant, Proxmox, networking, credentials, OAuth,
+    or production infrastructure modified.
+  - No application code created or modified.
+  - No existing files deleted.
+
+architecture_reference:
+  - docs/AUTONOMOUS_AGENT_PROTOCOL.md
+  - docs/AGENT_ROLES.md
+  - docs/CHECKPOINTS.md
+  - VISION.md
+  - CONTRIBUTING.md
+
+files_changed:
+  - docs/AUTONOMOUS_AGENT_PROTOCOL.md (new)
+  - docs/AGENT_ROLES.md (new)
+  - docs/CHECKPOINTS.md (new)
+  - docs/DECISIONS.md (new)
+  - BUILD_STATE.md (new)
+  - tasks/README.md (new)
+  - tasks/TEMPLATE.yaml (new)
+  - tasks/TASK-0001-autonomous-agent-protocol-bootstrap.yaml (new, this file)
+  - CLAUDE.md (updated -- pointer to the new protocol)
+  - CONTRIBUTING.md (updated -- pointer from Roles table to AGENT_ROLES.md)
+  - DEVELOPMENT_GUIDE.md (updated -- Branch Strategy section superseded)
+  - .claude/agents/git-engineer.md (updated -- checkpoint-branch commit/push pre-authorization noted)
+  - README.md (updated -- documentation table entry)
+  - CHANGELOG.md (updated -- milestone entry)
+
+tests:
+  - command: "Documentation-only milestone: no test suite applies. Validated via review of all new/edited files for internal consistency and cross-references."
+    result: PASS
+    ran_at: 2026-09-08T00:00:00Z
+
+blockers: []
+
+decisions:
+  - docs/DECISIONS.md#DEC-001
+  - docs/DECISIONS.md#DEC-002
+  - docs/DECISIONS.md#DEC-003
+  - docs/DECISIONS.md#DEC-004
+  - docs/DECISIONS.md#DEC-005
+
+checkpoint:
+  branch: checkpoint/TASK-0001-autonomous-agent-protocol-v1
+  commit: null
+  pushed: false
+  validated: true
+  build_state_updated: true
+  changelog_updated: true
+
+human_required: false
+human_action: null
+
+next_agent: Chairman
+
+timestamps:
+  created: 2026-09-08T14:00:00Z
+  updated: 2026-09-08T14:35:00Z
+  started: 2026-09-08T14:00:00Z
+  completed: null

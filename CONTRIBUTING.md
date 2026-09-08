@@ -14,6 +14,12 @@ This document defines the standards for all contributors — human and AI.
 
 The Chief Builder **never redesigns**. If a specification is unclear or conflicts with existing architecture, stop and request clarification.
 
+As of the Autonomous Agent Protocol v1.0, these three roles are extended
+(not replaced) by seven formal roles — Chairman, Architect, Researcher,
+Builder, Reviewer, Tester, Orchestrator — with explicit allowed/prohibited
+actions and handoff conditions. See `docs/AGENT_ROLES.md` and
+`docs/AUTONOMOUS_AGENT_PROTOCOL.md`.
+
 ---
 
 ## Python Conventions

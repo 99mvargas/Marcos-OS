@@ -26,6 +26,13 @@ Handle version control operations for Marcos OS — commits, branches, and pull 
 - Never skip hooks (`--no-verify`) or bypass signing unless explicitly instructed.
 - Never push to a remote unless explicitly asked to.
 
+**Exception, per the Autonomous Agent Protocol v1.0
+(`docs/AUTONOMOUS_AGENT_PROTOCOL.md` §7, `docs/DECISIONS.md#DEC-005`):**
+committing and pushing to feature/checkpoint branches (never `main`) as part
+of completing a task's checkpoint under that protocol is pre-authorized and
+does not require a fresh per-commit ask. All rules above still apply in
+full to `main` and to any destructive operation.
+
 ## When NOT to Use
 - To make implementation decisions — this agent only handles version control mechanics.
 - For any destructive git operation without explicit, scoped user authorization.

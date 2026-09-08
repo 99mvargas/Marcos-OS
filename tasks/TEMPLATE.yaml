@@ -1,0 +1,63 @@
+# Task file schema — Autonomous Agent Protocol v1.0
+# Copy this file to TASK-<0000>-<slug>.yaml to start a new task.
+# Field reference: tasks/README.md
+
+task_id: TASK-0000-example
+objective: >
+  One or two sentences: what this task accomplishes and why it matters.
+
+# PROPOSED | READY | RESEARCHING | ARCHITECTED | BUILDING | TESTING |
+# TEST_FAILED | TROUBLESHOOTING | REVIEWING | REVIEW_FAILED | CHECKPOINT |
+# BLOCKED | HUMAN_REQUIRED | COMPLETED | CANCELLED
+status: PROPOSED
+
+# Chairman | Architect | Researcher | Builder | Reviewer | Tester |
+# Orchestrator | Human
+assigned_agent: Chairman
+
+priority: P2   # P0 | P1 | P2 | P3
+
+requirements:
+  - Concrete, checkable requirement one.
+  - Concrete, checkable requirement two.
+
+architecture_reference:
+  - ARCHITECTURE.md#section-name   # or a specs/*.md file, or an inline plan
+
+files_changed: []
+
+tests: []
+# - command: python tests/test_example.py
+#   result: PASS | FAIL
+#   ran_at: 2026-09-08T00:00:00Z
+
+blockers: []
+
+decisions: []
+# - docs/DECISIONS.md#DEC-000
+
+checkpoint:
+  branch: null
+  commit: null
+  pushed: false
+  validated: false
+  build_state_updated: false
+  changelog_updated: false
+
+human_required: false
+human_action: null
+# human_action:
+#   reason: GOOGLE_OAUTH
+#   risk: LOW              # LOW | MEDIUM | HIGH
+#   action_required: "Authorize Google Calendar in browser."
+#   system_state:
+#     safe_to_pause: true
+#   resume_condition: "OAuth authorization completed."
+
+next_agent: Chairman
+
+timestamps:
+  created: 2026-09-08T00:00:00Z
+  updated: 2026-09-08T00:00:00Z
+  started: null
+  completed: null
