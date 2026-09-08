@@ -22,7 +22,7 @@ both currently exist.
 ## Current Task
 
 - **ID:** `TASK-0001-autonomous-agent-protocol-bootstrap`
-- **Status:** `CHECKPOINT`
+- **Status:** `COMPLETED`
 - **Assigned agent:** Builder (Claude Code)
 - **Objective:** Design and document the Autonomous Agent Protocol v1.0.
 - **Human action required:** No.
