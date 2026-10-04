@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Added `BACKLOG.md` — a single, priority-ordered backlog across all three
+  existing tracks (Autonomous Agent Protocol, dashboard/API sprint,
+  `apps/marcos-core` executive engine), per Marcos OS's standing priority
+  order. Closes out the repository-consolidation read-only review: notes
+  which Repo B ideas are now satisfied organically (the Verifier's
+  independent-check design), which single item remains Marcos's decision
+  (the `.mcp.json` Home Assistant entry), and that Repo B is otherwise safe
+  to archive. No code changed.
 * Implemented the deterministic Python Orchestrator, an independent
   Verifier, and a Watchdog (TASK-0005) — `apps/marcos-api/app/runtime/
   {orchestrator,verifier,watchdog}.py`. The Orchestrator claims the next
