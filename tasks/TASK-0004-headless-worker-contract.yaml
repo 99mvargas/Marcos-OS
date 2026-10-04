@@ -1,0 +1,142 @@
+task_id: TASK-0004-headless-worker-contract
+objective: >
+  Build and empirically validate the headless worker invocation contract for
+  both Claude Code and Codex: a bounded adapter (task + worktree + explicit
+  role + acceptance criteria -> structured WorkerResult) with per-role
+  permission profiles enforced at the tool-allowlist level, per
+  docs/RUNTIME_ARCHITECTURE.md §9/§22 item 2. Does not implement the
+  Orchestrator that dispatches these invocations (TASK-0005) and does not
+  start the persistent marcos-tasks-db container.
+
+status: CHECKPOINT
+
+assigned_agent: Builder
+
+priority: P0
+
+requirements:
+  - Implement a structured result contract (WorkerResult) that the
+    Orchestrator/Verifier read instead of parsing prose, per
+    AUTONOMOUS_AGENT_PROTOCOL.md's "structured artifacts, not prose"
+    requirement.
+  - Implement per-role permission profiles for both providers matching
+    docs/RUNTIME_ARCHITECTURE.md §9's table (Researcher/Tester/Reviewer:
+    read-only, no Edit/Write/commit/push; Builder: read/write + Bash +
+    commit/push to non-main).
+  - Never emit a full permission-bypass flag for either provider
+    (bypassPermissions/--dangerously-skip-permissions/
+    --dangerously-bypass-approvals-and-sandbox) regardless of role -- see
+    DEC-011.
+  - Empirically verify (not assume from documentation) that each role
+    profile actually runs headlessly without hanging and that the tool
+    allowlist is a real boundary, not just a documented intent.
+  - Record token/cost telemetry fields compatible with
+    agent_invocations' schema (TASK-0003) on every result, even though no
+    live Postgres write happens in this task.
+  - Save full raw transcripts to disk (not inlined in the result) per
+    docs/TOKEN_EFFICIENCY.md's context-minimization rules.
+  - Do not implement the n8n/Python Orchestrator, Verifier, or Watchdog
+    (TASK-0005).
+  - Do not start the persistent marcos-tasks-db container (HUMAN APPROVAL
+    per AUTONOMOUS_AGENT_PROTOCOL.md §10) -- record as HUMAN_REQUIRED
+    instead.
+  - Do not perform a real Builder-role (file-editing) headless dry run
+    against this actual repository without a human-approved, scoped task --
+    record as HUMAN_REQUIRED instead; a Builder-profile write-path smoke
+    test against an isolated scratchpad directory (not this repo) is
+    sufficient evidence the mechanism works.
+  - Never commit secrets; never merge into main.
+
+architecture_reference:
+  - docs/RUNTIME_ARCHITECTURE.md#9-claude-code-responsibility
+  - docs/RUNTIME_ARCHITECTURE.md#22-recommended-implementation-sequence
+  - docs/AGENT_ROLES.md
+  - docs/AUTONOMOUS_AGENT_PROTOCOL.md#10-safety-boundaries
+  - docs/TOKEN_EFFICIENCY.md
+  - docs/DECISIONS.md#DEC-010
+  - docs/DECISIONS.md#DEC-011
+
+files_changed:
+  - apps/marcos-api/app/runtime/__init__.py (new)
+  - apps/marcos-api/app/runtime/permissions.py (new -- per-role, per-provider
+    tool/sandbox profiles)
+  - apps/marcos-api/app/runtime/worker_result.py (new -- structured result
+    contract)
+  - apps/marcos-api/app/runtime/claude_worker.py (new -- headless `claude -p`
+    wrapper)
+  - apps/marcos-api/app/runtime/codex_worker.py (new -- headless `codex exec`
+    wrapper)
+  - HUMAN_REQUIRED_QUEUE.md (new -- pre-Postgres durable human_required_queue
+    equivalent)
+  - docs/DECISIONS.md (updated -- DEC-010, DEC-011)
+  - BUILD_STATE.md (updated)
+  - CHANGELOG.md (updated)
+  - tasks/TASK-0004-headless-worker-contract.yaml (new, this file)
+
+tests:
+  - command: "python3 -m py_compile apps/marcos-api/app/runtime/*.py"
+    result: PASS
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "python3 -c \"from app.runtime import claude_worker, codex_worker, permissions, worker_result\" (import sanity check, all 4 roles enumerated for both providers)"
+    result: PASS
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Real invoke_claude() call, Researcher role, claude-haiku-4-5, cwd=this worktree: asked to read CHANGELOG.md's first line and report it back"
+    result: "PASS -- status=success, summary='# Changelog' (correct), files_changed=[], cost $0.0552"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Real invoke_codex() call, Researcher role, sandbox=read-only, cwd=this worktree: same CHANGELOG.md first-line task"
+    result: "PASS -- status=success, summary='# Changelog' (correct), files_changed=[], ~28.5k input/47 output tokens, cost not computed (OpenAI pricing table unverified placeholder, pre-existing TASK-0003 gap)"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Safety-boundary check: real invoke_claude() call, Researcher role, asked to create a file in this worktree"
+    result: "PASS -- file was not created (verified via `ls`, no such file); Write/Edit were structurally absent from the Researcher tool allowlist, not merely declined by model choice"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Builder-profile write-path smoke test (acceptEdits, no full bypass), real invoke, isolated scratchpad directory (NOT this repository): asked to create a file with known content"
+    result: "PASS -- file created with exact requested content, no hang, no permission_denials, cost $0.0832. Not exercised against this actual repository -- see HUMAN_REQUIRED_QUEUE.md #2."
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Role-clarity check: real invoke_claude() call, Researcher role, asked which role it was acting as"
+    result: "PASS -- explicitly identified as Researcher per the Marcos OS protocol, not the repo's default CLAUDE.md persona (--append-system-prompt fix)"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "grep for credential/secret patterns across all new files"
+    result: PASS -- clean
+    ran_at: 2026-10-04T00:00:00Z
+
+blockers:
+  - "Not a blocker for this task's own completion, but flagged for the next step: TASK-0005's Orchestrator cannot dispatch against the live marcos-tasks-db container until a human approves starting it (HUMAN_REQUIRED_QUEUE.md #1) -- it will instead be built and validated against an ephemeral, throwaway Postgres container, matching TASK-0003's own pattern."
+  - "A real Builder-role (file-editing) headless dry run against this actual repository has not been performed and requires a human-approved, scoped low-risk task first (HUMAN_REQUIRED_QUEUE.md #2)."
+
+decisions:
+  - docs/DECISIONS.md#DEC-010
+  - docs/DECISIONS.md#DEC-011
+
+checkpoint:
+  branch: checkpoint/TASK-0004-headless-worker-contract-v1
+  commit: null
+  pushed: false
+  validated: true
+  build_state_updated: true
+  changelog_updated: true
+
+human_required: true
+human_action:
+  reason: INFRASTRUCTURE_CHANGE
+  risk: LOW
+  action_required: >
+    See HUMAN_REQUIRED_QUEUE.md #1 (approve starting the marcos-tasks-db
+    container) and #2 (name or approve a scoped low-risk task for the first
+    real Builder-role headless dry run against this repository). Neither
+    blocks this task's own CHECKPOINT/COMPLETED status -- both only gate
+    TASK-0005's live dispatch and the Builder-role path's final real-world
+    validation.
+  system_state:
+    safe_to_pause: true
+  resume_condition: >
+    Marcos (or Chairman with Marcos's sign-off) resolves either queue entry;
+    TASK-0005 proceeds against an ephemeral Postgres regardless, per
+    blockers above.
+
+next_agent: Chairman
+
+timestamps:
+  created: 2026-10-04T00:00:00Z
+  updated: 2026-10-04T00:00:00Z
+  started: 2026-10-04T00:00:00Z
+  completed: 2026-10-04T00:00:00Z

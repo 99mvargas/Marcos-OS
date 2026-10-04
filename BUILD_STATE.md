@@ -15,43 +15,91 @@ both currently exist.
 ## Protocol Status
 
 - **Autonomous Agent Protocol:** v1.0 adopted (documentation/architecture
-  milestone, TASK-0001). The runtime is now fully **designed**
-  (`docs/RUNTIME_ARCHITECTURE.md`, TASK-0002) and its operational state
-  store is **implemented but not deployed** (`database/`,
-  `apps/marcos-api/app/db/`, TASK-0003) — the `marcos-tasks-db` Postgres
-  container has not been started (infrastructure change requiring human
-  approval, see TASK-0003's `blockers`). No n8n workflow or headless
-  Claude Code invocation exists yet. Implementation is sequenced as
-  TASK-0003 through TASK-0007 (see `docs/RUNTIME_ARCHITECTURE.md` §22),
-  each requiring separate Chairman approval before starting.
-- **Active tasks:** see `tasks/*.yaml`.
+  milestone, TASK-0001). The runtime is **designed**
+  (`docs/RUNTIME_ARCHITECTURE.md`, TASK-0002), its operational state store
+  is **implemented but not deployed** (`database/`, `apps/marcos-api/app/db/`,
+  TASK-0003), and the headless worker invocation contract for both Claude
+  Code and Codex is **implemented and empirically validated**
+  (`apps/marcos-api/app/runtime/`, TASK-0004) — but the `marcos-tasks-db`
+  Postgres container has still not been started (infrastructure change
+  requiring human approval; see `HUMAN_REQUIRED_QUEUE.md` #1). The
+  Orchestrator role is no longer designed as n8n itself — see `DEC-010`,
+  which supersedes `DEC-007` with deterministic Python/code polling
+  Postgres directly; TASK-0005 implements it next. Implementation is
+  sequenced as TASK-0003 through TASK-0007 (see
+  `docs/RUNTIME_ARCHITECTURE.md` §22), now directed by the Repository
+  Owner directly rather than gated on a separate Chairman approval per
+  task (see `DEC-010`'s ownership note).
+- **Active tasks:** see `tasks/*.yaml`. **Open human-required items:** see
+  `HUMAN_REQUIRED_QUEUE.md`.
 
 ## Current Task
 
-- **ID:** `TASK-0003-runtime-state-store`
-- **Status:** `COMPLETED`
+- **ID:** `TASK-0004-headless-worker-contract`
+- **Status:** `CHECKPOINT`
 - **Assigned agent:** Builder (Claude Code)
-- **Objective:** Implement the PostgreSQL operational state store (five
-  tables from `docs/RUNTIME_ARCHITECTURE.md` §6) plus AI invocation
-  cost/token observability, as plain SQL migrations and a thin typed
-  access layer — the smallest production-quality foundation for the
-  runtime designed in TASK-0002. Does not implement the n8n Orchestrator
-  or any Claude/OpenAI invocation.
-- **Human action required:** No (for this checkpoint). Flagged
-  separately: starting the `marcos-tasks-db` Docker container is an
-  infrastructure change requiring human approval before TASK-0004/0005
-  can run against a live instance — see this task's `blockers`.
-- **Next agent:** Chairman (review the implementation and `DEC-009`, and
-  decide whether to approve starting `marcos-tasks-db`).
+- **Objective:** Build and empirically validate the headless worker
+  invocation contract for Claude Code and Codex — a bounded adapter (task
+  + worktree + explicit role + acceptance criteria → structured
+  `WorkerResult`) with per-role permission profiles enforced at the
+  tool-allowlist level, never via a full permission-bypass flag. Does not
+  implement the Orchestrator (TASK-0005) and does not start the persistent
+  `marcos-tasks-db` container.
+- **Human action required:** No, for this checkpoint's own completion.
+  Two independent items recorded in `HUMAN_REQUIRED_QUEUE.md` (#1: approve
+  starting `marcos-tasks-db`; #2: approve a scoped low-risk task for the
+  first real Builder-role headless dry run against this repository) —
+  neither blocks TASK-0005, which proceeds against an ephemeral Postgres
+  container exactly as TASK-0003 did.
+- **Next agent:** Chairman (review the implementation, `DEC-010`, `DEC-011`,
+  and the two open `HUMAN_REQUIRED_QUEUE.md` items).
 
 ## Previous Tasks
 
+- **ID:** `TASK-0003-runtime-state-store` — `COMPLETED`, see
+  `checkpoint/TASK-0003-runtime-state-store-v1`.
 - **ID:** `TASK-0002-autonomous-agent-runtime` — `COMPLETED`, see
   `checkpoint/TASK-0002-autonomous-agent-runtime-v1`.
 - **ID:** `TASK-0001-autonomous-agent-protocol-bootstrap` — `COMPLETED`,
   see `checkpoint/TASK-0001-autonomous-agent-protocol-v1`.
 
 ## What Changed This Checkpoint
+
+- Added `apps/marcos-api/app/runtime/{permissions,worker_result,
+  claude_worker,codex_worker}.py` — the headless worker invocation
+  contract. `permissions.py` encodes docs/RUNTIME_ARCHITECTURE.md §9's
+  per-role tool table for both providers; `worker_result.py` is the typed
+  result both the future Orchestrator and Verifier read instead of prose;
+  `claude_worker.py`/`codex_worker.py` shell out to `claude -p`/`codex exec`
+  respectively and parse their real (empirically verified, not assumed)
+  JSON/JSONL output schemas.
+- Verified against the real, installed CLIs (not mocked): a Researcher-role
+  Claude invocation correctly read a file and reported back; the same for
+  Codex in `read-only` sandbox mode; a Researcher-role Claude invocation
+  asked to create a file could not (`Write`/`Edit` were absent from its
+  tool allowlist — structurally blocked, not merely declined); a
+  Builder-profile (`acceptEdits`, not a full bypass) write succeeded
+  cleanly in an isolated scratchpad directory outside this repository; a
+  role-clarity fix (`--append-system-prompt`) confirmed a sub-invocation
+  correctly identifies its assigned role rather than this repo's default
+  `CLAUDE.md` persona.
+- Recorded `docs/DECISIONS.md#DEC-010` — the Orchestrator (TASK-0005) is
+  deterministic Python polling Postgres, not n8n itself; supersedes
+  `DEC-007`. Decided directly by the Repository Owner in the absence of a
+  live Chairman session, not left `proposed`.
+- Recorded `docs/DECISIONS.md#DEC-011` — headless invocations never emit a
+  full permission-bypass flag for either provider; the tool allowlist is
+  the enforcement boundary, verified empirically after this repository's
+  own auto-mode safety classifier flagged a bypass attempt during testing.
+- Added `HUMAN_REQUIRED_QUEUE.md` — the pre-Postgres durable equivalent of
+  the `human_required_queue` table, with two open entries (see above).
+- Updated `CHANGELOG.md`.
+- No Orchestrator, Verifier, or Watchdog implemented yet (TASK-0005). No
+  live Postgres, Docker, network, or production changes. No secrets
+  committed. Real but small (~$0.35 USD, cheapest/Haiku tier) API spend
+  during empirical validation — see `tasks/TASK-0004-headless-worker-contract.yaml`'s `tests`.
+
+## What Changed in the Previous Checkpoint (TASK-0003)
 
 - Added `database/migrations/0001`–`0005` — the five runtime tables
   (`tasks`, `task_events`, `agent_invocations`, `human_required_queue`,
@@ -98,10 +146,13 @@ both currently exist.
 - `apps/marcos-dashboard/` — React 19 + Vite SPA, mock-data driven, active
   development track.
 - `apps/marcos-api/` — FastAPI backend, JSON-file storage for
-  captures/finance/statements; **`app/db/` (new, TASK-0003)** is a
-  separate `psycopg`-based access layer for the Autonomous Agent
-  Protocol's runtime state store — distinct tables, distinct purpose,
-  not wired into the FastAPI routes yet.
+  captures/finance/statements; **`app/db/` (TASK-0003)** is a separate
+  `psycopg`-based access layer for the Autonomous Agent Protocol's runtime
+  state store — distinct tables, distinct purpose, not wired into the
+  FastAPI routes yet. **`app/runtime/` (new, TASK-0004)** is the headless
+  Claude Code/Codex worker invocation contract — also not wired into the
+  FastAPI routes; it is invoked directly by whatever dispatches a worker
+  (manually today, TASK-0005's Orchestrator next).
 - `apps/marcos-core/` — earlier-phase Python executive/memory engine,
   untouched, unrelated to marcos-api.
 - `database/` — **(new, TASK-0003)** the runtime state store's SQL
@@ -120,18 +171,20 @@ both currently exist.
 - Statement Parser real extraction approach (PDF parsing method) — owner:
   Chief Systems Architect. Detail in `NEXT_TASK.md`. Unaffected by this
   protocol milestone.
-- `DEC-006`–`DEC-008` (TASK-0002's PostgreSQL/n8n/multi-provider
-  decisions) — still `proposed`, awaiting explicit Chairman approval.
+- `DEC-006`, `DEC-008` (TASK-0002's PostgreSQL/multi-provider decisions) —
+  still `proposed`, awaiting explicit Chairman approval. `DEC-007`
+  (n8n-as-Orchestrator) is superseded by `DEC-010`, not pending approval.
 
 ## Next Action
 
-Await Chairman review of the TASK-0003 implementation and `DEC-009`, and
-a decision on whether to approve starting the `marcos-tasks-db` Docker
-container (infrastructure change, human-approval-gated per
-`docs/AUTONOMOUS_AGENT_PROTOCOL.md` §10). TASK-0004 (headless Claude Code
-invocation contract) does not begin until approved (`status: READY`).
+TASK-0005 (Python Orchestrator + Verifier + Watchdog) proceeds next,
+validated against an ephemeral Postgres container exactly as TASK-0003 and
+TASK-0004 were. Two independent items await a human decision in
+`HUMAN_REQUIRED_QUEUE.md` (#1: approve starting the persistent
+`marcos-tasks-db` container; #2: approve a scoped low-risk task for the
+first real Builder-role headless dry run) — neither blocks TASK-0005.
 
 ---
 
-_Last updated: 2026-09-08 by Claude Code (Builder), checkpoint
-`checkpoint/TASK-0003-runtime-state-store-v1`._
+_Last updated: 2026-10-04 by Claude Code (Builder), checkpoint
+`checkpoint/TASK-0004-headless-worker-contract-v1`._

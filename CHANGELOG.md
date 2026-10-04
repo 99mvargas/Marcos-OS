@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+* Implemented and empirically validated the headless worker invocation
+  contract (TASK-0004) — bounded, non-interactive `claude -p` and `codex
+  exec` wrappers (`apps/marcos-api/app/runtime/`) that take a task + role +
+  worktree and return a structured `WorkerResult`, never prose. Per-role
+  permission profiles (Researcher/Tester/Reviewer read-only,
+  Builder read/write) are enforced via tool allowlists, not a permission-
+  bypass flag — real smoke tests against the installed `claude`/`codex`
+  CLIs confirmed read-only roles run headlessly with no bypass and no hang,
+  and that a disallowed write attempt is structurally blocked, not just
+  declined. Recorded as DEC-010 (Orchestrator is deterministic Python, not
+  n8n itself — supersedes DEC-007) and DEC-011 (never bypass permissions
+  for headless invocations). Two items recorded in the new
+  `HUMAN_REQUIRED_QUEUE.md` (starting the `marcos-tasks-db` container; a
+  real Builder-role dry run against this repository) — neither blocks this
+  checkpoint. See `apps/marcos-api/app/runtime/`, `docs/DECISIONS.md`,
+  `HUMAN_REQUIRED_QUEUE.md`, `tasks/TASK-0004-headless-worker-contract.yaml`.
 * Implemented the Autonomous Agent Runtime's operational state store
   (TASK-0003) — five PostgreSQL tables (`tasks`, `task_events`,
   `agent_invocations`, `human_required_queue`, `checkpoints`) as

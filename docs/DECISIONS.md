@@ -207,3 +207,74 @@ Format per entry: date, decision, status (`decided` / `deferred` /
   `docker-compose.marcos-os.yml` stack, torn down immediately after
   validation) — this is "running tests / local builds," which the same
   table marks `AUTONOMOUS`.
+
+## DEC-010 — Orchestrator is deterministic Python/code, not n8n itself; supersedes DEC-007's n8n-as-Orchestrator design
+
+- **Date:** 2026-10-04
+- **Status:** decided
+- **Owner:** Repository Owner (Marcos), directed to Builder (Claude Code)
+  directly. No live Chairman (ChatGPT) session exists in this loop; per
+  `AUTONOMOUS_AGENT_PROTOCOL.md` §4, the Repository Owner sits outside and
+  above the agent roles and is the party who resolves exactly this kind of
+  cross-cutting architectural call, so this is recorded as `decided`, not
+  `proposed`.
+- **Decision:** The Orchestrator role (`AGENT_ROLES.md` §7) is implemented as
+  deterministic Python code (TASK-0005) that polls Postgres, claims tasks,
+  dispatches headless Claude/Codex worker invocations (TASK-0004), enforces
+  leases/retries/attempt limits, and writes `human_required` entries — not
+  n8n itself performing poll/claim/dispatch. This supersedes DEC-007's
+  "n8n polls Postgres, claims tasks atomically, and dispatches..." design,
+  which is not implemented and is now superseded rather than built. n8n's
+  role is narrowed to integrations, scheduled triggers, notifications
+  (Telegram), and other deterministic workflows that don't require owning
+  the task-claim/dispatch loop itself.
+- **Rationale:** n8n owning the live claim/dispatch loop makes the
+  orchestration logic's correctness (atomic claims, lease math, retry
+  backoff, state-machine transitions) depend on correctly wiring a visual
+  workflow tool rather than on testable, version-controlled code review —
+  exactly the kind of "framework-owned agent loop that's harder to constrain
+  to the role-permission model" that DEC-007's own sibling decision (DEC-008)
+  already rejected for general agent frameworks, for the same underlying
+  reason. Plain Python polling Postgres is unit-testable, diffable, and
+  reviewable the same way the rest of this runtime is (TASK-0003's access
+  layer, TASK-0004's worker wrappers). DEC-006 (Postgres as the live
+  operational store) and DEC-008 (no general agent framework, no second n8n
+  instance) are unaffected by this decision — only DEC-007's specific
+  "n8n is the Orchestrator" claim is superseded.
+
+## DEC-011 — Headless worker invocations never use a full permission-bypass flag; role scoping is tool-allowlist-based, not permission-mode-based
+
+- **Date:** 2026-10-04
+- **Status:** decided
+- **Owner:** Builder (Claude Code), decided during TASK-0004 implementation
+  after this repository's own auto-mode safety classifier flagged a
+  `claude -p --permission-mode bypassPermissions` smoke-test command as an
+  unsafe default for an autonomous agent loop without explicit per-action
+  user authorization.
+- **Decision:** `apps/marcos-api/app/runtime/permissions.py` never emits
+  `--permission-mode bypassPermissions` / `--dangerously-skip-permissions`
+  (Claude Code) or `--dangerously-bypass-approvals-and-sandbox` (Codex) for
+  any role. Read-only roles (Researcher/Tester/Reviewer) run with no
+  permission-mode flag at all — empirically verified to complete headlessly
+  without hanging, because their `--tools` allowlist excludes Edit/Write
+  entirely, so there is nothing requiring a permission prompt in the first
+  place. Builder uses `--permission-mode acceptEdits` (Claude Code) /
+  `-s workspace-write` (Codex) — narrower than a full bypass: file edits are
+  auto-accepted, but a Bash command that would otherwise require a prompt
+  fails closed (denied, visible in the result's `permission_denials`) rather
+  than being silently approved.
+- **Rationale:** A blanket permission bypass on an unattended, repeatedly-
+  invoked process is a materially larger blast radius than a human
+  approving each Claude Code action interactively — the auto-mode classifier
+  flagging this on the very first attempt is a correct, working safety
+  control, not an obstacle to route around. The tool allowlist (not the
+  permission mode) is the actual enforcement boundary for role scope; this
+  was verified empirically against the installed `claude`/`codex` CLIs
+  during this task (see `permissions.py`'s module docstring and TASK-0004's
+  `tests`), not assumed from documentation alone.
+- **Known gap, not solved by this decision:** a role with `Bash` access
+  (Researcher/Tester/Reviewer) could still shell out to something
+  destructive that isn't covered by the `disallowedTools` pattern denylist
+  in `permissions.py` — pattern-based Bash denial is defense in depth, not a
+  sandbox. True isolation (e.g. a disposable container/VM with a read-only
+  bind mount for non-Builder roles) is explicitly deferred to a future task.
