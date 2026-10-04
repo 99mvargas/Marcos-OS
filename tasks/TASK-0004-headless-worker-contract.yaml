@@ -8,7 +8,7 @@ objective: >
   Orchestrator that dispatches these invocations (TASK-0005) and does not
   start the persistent marcos-tasks-db container.
 
-status: CHECKPOINT
+status: COMPLETED
 
 assigned_agent: Builder
 
@@ -109,8 +109,8 @@ decisions:
 
 checkpoint:
   branch: checkpoint/TASK-0004-headless-worker-contract-v1
-  commit: null
-  pushed: false
+  commit: b2647b5903e0bcd65b119559988c11714586f244
+  pushed: true
   validated: true
   build_state_updated: true
   changelog_updated: true
