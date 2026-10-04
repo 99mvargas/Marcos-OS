@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Committed `AGENTS.md` (Codex operating rules, mirroring `CLAUDE.md`'s
+  role for Claude Code) — migrated from the second, independent
+  `~/marcos-os` repository as part of repository consolidation. Content is
+  unchanged from that repo's version; added one new section cross-
+  referencing `docs/AUTONOMOUS_AGENT_PROTOCOL.md` §10 as the authority
+  where the two safety models overlap, and a one-line pointer from
+  `CLAUDE.md`. No architecture changed; no secrets included.
 * Implemented the Autonomous Agent Runtime's operational state store
   (TASK-0003) — five PostgreSQL tables (`tasks`, `task_events`,
   `agent_invocations`, `human_required_queue`, `checkpoints`) as

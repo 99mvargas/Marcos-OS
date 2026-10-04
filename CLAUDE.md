@@ -51,3 +51,5 @@ operating rules as the Builder role within that protocol. Notably:
 - Escalate to `HUMAN_REQUIRED` (per `AUTONOMOUS_AGENT_PROTOCOL.md` §8)
   instead of pausing informally when a genuine decision, destructive
   action, or interactive authentication is needed.
+- Codex operates under the equivalent rules in `AGENTS.md`; where the two
+  files differ, `docs/AUTONOMOUS_AGENT_PROTOCOL.md` §10 governs both.
