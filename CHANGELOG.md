@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+* Added the Vaultwarden architecture/security spec (`docs/VAULTWARDEN_ARCHITECTURE.md`),
+  backup/restore/recovery and breach-driven rotation design
+  (`docs/VAULTWARDEN_BACKUP_RECOVERY.md`), and a not-yet-started deployment
+  definition (`docker/docker-compose.vaultwarden.yml`, `docker/.env.example`
+  variable names only). Specification and prepared-but-not-deployed
+  infrastructure only — the container has not been started, no hostname or
+  Cloudflare Access policy has been created, and no real credentials exist
+  anywhere in this change. Settings (pinned image tag, `ADMIN_TOKEN` as an
+  Argon2id hash, `SIGNUPS_ALLOWED=false`, SQLite-backed, `.backup`-based
+  snapshot method) are verified against the upstream project's own
+  documentation, not invented. Remote-access recommendation (Cloudflare
+  Tunnel + Access for the iPhone, Tailscale for non-conflicting devices)
+  addresses the known Covenant Eyes/Tailscale conflict without assuming a
+  VPN-only design; implementing it is recorded as a pending human decision,
+  not performed.
 * Implemented the Autonomous Agent Runtime's operational state store
   (TASK-0003) — five PostgreSQL tables (`tasks`, `task_events`,
   `agent_invocations`, `human_required_queue`, `checkpoints`) as

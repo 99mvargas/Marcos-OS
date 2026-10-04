@@ -1,0 +1,27 @@
+# Vaultwarden (see docs/VAULTWARDEN_ARCHITECTURE.md). Defined as code only --
+# per docs/AUTONOMOUS_AGENT_PROTOCOL.md §10, starting this service is an
+# infrastructure change requiring human approval, same as marcos-tasks-db in
+# docker-compose.marcos-os.yml. Bound to 127.0.0.1 only; no inbound WAN/LAN
+# port. Remote access (Cloudflare Tunnel + Access, or Tailscale for
+# non-conflicting devices) is a separate, also-not-yet-authorized change --
+# see VAULTWARDEN_ARCHITECTURE.md §4.
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.37.1-alpine
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${VAULTWARDEN_DOMAIN:?set in docker/.env once a hostname is chosen, never committed}
+      SIGNUPS_ALLOWED: ${VAULTWARDEN_SIGNUPS_ALLOWED:-false}
+      WEBSOCKET_ENABLED: "true"
+      ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN:?set in docker/.env as an Argon2id hash, never committed}
+      SMTP_HOST: ${VAULTWARDEN_SMTP_HOST:-}
+      SMTP_PORT: ${VAULTWARDEN_SMTP_PORT:-587}
+      SMTP_SECURITY: starttls
+      SMTP_FROM: ${VAULTWARDEN_SMTP_FROM:-}
+      SMTP_USERNAME: ${VAULTWARDEN_SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${VAULTWARDEN_SMTP_PASSWORD:?set in docker/.env, never committed}
+    ports:
+      - "127.0.0.1:${VAULTWARDEN_PORT:-8422}:80"
+    volumes:
+      - ${VAULTWARDEN_DATA_DIR:-./vaultwarden-data}:/data

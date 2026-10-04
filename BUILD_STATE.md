@@ -26,6 +26,18 @@ both currently exist.
   each requiring separate Chairman approval before starting.
 - **Active tasks:** see `tasks/*.yaml`.
 
+## Vaultwarden (specification only, parallel track)
+
+Architecture, hardening settings, and backup/recovery/rotation design
+added: `docs/VAULTWARDEN_ARCHITECTURE.md`, `docs/VAULTWARDEN_BACKUP_RECOVERY.md`,
+`docker/docker-compose.vaultwarden.yml` (not started), `docker/.env.example`
+(variable names only). Not part of the Autonomous Agent Protocol's
+TASK-000X sequence above — a separate, independent deliverable. Nothing
+deployed; no hostname, Cloudflare Access policy, or real credential
+created. Four items are explicitly left for Marcos to decide (hostname,
+Access policy membership, invite-only vs. one-time signup window, which
+physical FIDO2 keys to buy) — see the architecture doc §5.
+
 ## Current Task
 
 - **ID:** `TASK-0003-runtime-state-store`
