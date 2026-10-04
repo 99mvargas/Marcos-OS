@@ -26,6 +26,38 @@ both currently exist.
   each requiring separate Chairman approval before starting.
 - **Active tasks:** see `tasks/*.yaml`.
 
+## Repository Consolidation (First Mission)
+
+A second, independent repository (`~/marcos-os`, unrelated git history, an
+earlier infrastructure-control-plane-focused evolution of Marcos OS) was
+read-only classified against this canonical repository on 2026-10-04. Two
+pre-existing backups of that repository were verified intact
+(`~/marcos-os-premerge-backup.bundle`,
+`~/marcos-os-workforce-untracked-backup.tar.gz`); nothing in it was
+modified. Findings:
+
+- **Migrated:** `AGENTS.md` (Codex operating rules) — committed this
+  checkpoint, content unchanged, cross-referenced from `CLAUDE.md` and
+  `docs/AUTONOMOUS_AGENT_PROTOCOL.md` §10.
+- **Not migrated (obsolete):** its `AGENTS.md`'s host repo also had stub
+  `ansible/`/`docker/`/`scripts/` READMEs (no real content) and a
+  `workforce/` Python task-store prototype — superseded by this repo's
+  Postgres-backed TASK-0003 store; no architecture worth porting.
+- **Kept as historical reference only, not adopted as current truth:** its
+  `CLAUDE.md` (different product framing), `infrastructure/discovery/`
+  network/Proxmox/UniFi snapshots, and `docs/ACTIVE-WORK.md` (95KB
+  operational log) — real provenance, but frozen-in-time observations, not
+  live state.
+- **Outstanding, not yet done:** folding the Verifier/Orchestrator safety
+  ideas from its `agents/orchestrator.md` and `agents/verifier.md` (never
+  trust a worker's self-reported success; re-check live state; serialize
+  work on shared resources) into `docs/AGENT_ROLES.md` and the future
+  Verifier implementation; and deciding whether to adopt its `.mcp.json`
+  Home Assistant MCP server entry (deferred — requires Marcos's input on
+  whether that integration is wanted, not purely a repository-level call).
+- Once those two items are resolved, `~/marcos-os` has no remaining unique
+  production logic and is safe to archive (not delete).
+
 ## Current Task
 
 - **ID:** `TASK-0003-runtime-state-store`
@@ -133,5 +165,11 @@ invocation contract) does not begin until approved (`status: READY`).
 
 ---
 
-_Last updated: 2026-09-08 by Claude Code (Builder), checkpoint
-`checkpoint/TASK-0003-runtime-state-store-v1`._
+_Last updated: 2026-10-04 by Claude Code (Builder), checkpoint
+`checkpoint/repo-consolidation-codex-guardrails-v1` — repository-consolidation
+work, parallel to and independent of the TASK-0003/0004 protocol sequence
+above, which this checkpoint does not otherwise change. Note for whoever
+reconciles branches: TASK-0004 implementation is proceeding concurrently on
+`agent/infrastructure/TASK-0004-headless-worker-contract`, branched from the
+same `checkpoint/TASK-0003-runtime-state-store-v1` base; both branches touch
+`BUILD_STATE.md` and will need a manual merge, not a fast-forward._
