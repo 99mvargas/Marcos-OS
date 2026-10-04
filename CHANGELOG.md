@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+* Implemented the deterministic Python Orchestrator, an independent
+  Verifier, and a Watchdog (TASK-0005) — `apps/marcos-api/app/runtime/
+  {orchestrator,verifier,watchdog}.py`. The Orchestrator claims the next
+  dispatchable task from Postgres (a new generalization of TASK-0003's
+  READY-only claim query), dispatches TASK-0004's Claude/Codex workers, and
+  applies the deterministic state transition the result implies — stopping
+  short of auto-dispatching the `CHECKPOINT` (commit/push) step against a
+  real repository. The Verifier runs non-LLM secrets/scope/real-test checks
+  before accepting a Builder/Tester result. The Watchdog sweeps expired
+  leases, escalates retry-exhausted tasks to `HUMAN_REQUIRED`, and detects
+  dead invocations. Validated end-to-end against a real ephemeral
+  `postgres:16-alpine` container, including a real Researcher-role `claude
+  -p` dispatch that correctly advanced a task's state — this run caught
+  and fixed a real status-vocabulary mismatch bug between `WorkerResult`
+  and the `agent_invocations` schema. See
+  `tasks/TASK-0005-orchestrator-verifier-watchdog.yaml`.
 * Implemented and empirically validated the headless worker invocation
   contract (TASK-0004) — bounded, non-interactive `claude -p` and `codex
   exec` wrappers (`apps/marcos-api/app/runtime/`) that take a task + role +

@@ -1,0 +1,108 @@
+task_id: TASK-0005-orchestrator-verifier-watchdog
+objective: >
+  Implement the Orchestrator role (docs/AGENT_ROLES.md §7) as deterministic
+  Python code per DEC-010 (supersedes DEC-007's n8n-as-Orchestrator design):
+  claim/dispatch/apply against TASK-0003's Postgres store using TASK-0004's
+  headless worker contract, plus an independent Verifier and a Watchdog.
+  Deliberately stops short of auto-dispatching the CHECKPOINT (commit/push)
+  step itself -- that remains a human-directed Builder session.
+
+status: COMPLETED
+
+assigned_agent: Builder
+
+priority: P0
+
+requirements:
+  - Generalize TASK-0003's READY-only atomic claim to every state with a
+    worker-dispatchable next_agent (Researcher/Builder/Tester/Reviewer),
+    without touching Architect/Chairman/Human-owned states.
+  - Deterministic state-machine transitions per tasks/README.md §
+    Lifecycle -- no LLM call decides the next status.
+  - Record agent_invocations (start/complete), task_events, and
+    human_required_queue rows for every dispatch, matching TASK-0003's
+    schema exactly.
+  - Independent Verifier: secrets scan, unintended-changes-vs-declared-scope
+    check, and real test-command execution -- no LLM call, runs in addition
+    to (not instead of) the adversarial Reviewer-role worker invocation.
+  - Watchdog: lease-expiry sweep, retry-exhaustion escalation to
+    HUMAN_REQUIRED, dead-invocation detection, cost-audit signal logging
+    (not an auto-pause, per docs/TOKEN_EFFICIENCY.md's already-decided
+    scope).
+  - Validate end-to-end against an ephemeral, throwaway Postgres container
+    -- never the persistent marcos-tasks-db service.
+  - Do not auto-dispatch a headless Builder invocation to perform the
+    9-step checkpoint procedure against a real repository (HUMAN_REQUIRED_
+    QUEUE.md #2's concern, enforced structurally by excluding CHECKPOINT
+    from the dispatchable status set).
+  - Never commit secrets; never merge into main.
+
+architecture_reference:
+  - docs/AGENT_ROLES.md#7-orchestrator
+  - docs/RUNTIME_ARCHITECTURE.md#8-n8n-responsibility
+  - docs/RUNTIME_ARCHITECTURE.md#13-task-lifecycle-and-state-transitions
+  - docs/RUNTIME_ARCHITECTURE.md#14-retryidempotency-model
+  - docs/RUNTIME_ARCHITECTURE.md#15-failure-recovery-model
+  - tasks/README.md#lifecycle
+  - docs/AUTONOMOUS_AGENT_PROTOCOL.md#11-quality-control
+  - docs/DECISIONS.md#DEC-010
+  - apps/marcos-api/app/runtime/ (TASK-0004)
+
+files_changed:
+  - apps/marcos-api/app/db/tasks_repo.py (updated -- added
+    claim_next_dispatchable_task, update_task_status)
+  - apps/marcos-api/app/runtime/orchestrator.py (new)
+  - apps/marcos-api/app/runtime/verifier.py (new)
+  - apps/marcos-api/app/runtime/watchdog.py (new)
+  - tasks/TASK-0005-orchestrator-verifier-watchdog.yaml (new, this file)
+
+tests:
+  - command: "python3 -m py_compile apps/marcos-api/app/db/tasks_repo.py apps/marcos-api/app/runtime/*.py"
+    result: PASS
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Full real end-to-end cycle against an ephemeral postgres:16-alpine container (migrated via database/migrate.py): inserted a real READY/Researcher task, ran orchestrator.run_cycle() with no worktree present"
+    result: "PASS -- raised_human_required(reason=WORKTREE_MISSING), released the lock, did not crash or silently skip"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Same task, worktree created, human_required resolved, run_cycle() run again -- real claude -p Researcher-role dispatch (claude-haiku-4-5) asked to read CHANGELOG.md's first line"
+    result: "PASS on retry -- first attempt surfaced a real bug (see below); after the fix: dispatched=True, status=success, summary correctly quoted '# Changelog', task transitioned READY -> RESEARCHING (pre-dispatch normalize) -> ARCHITECTED/next_agent=Architect, task_events and agent_invocations rows both correct"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "(bug found by the above, not a passing test) First real run raised psycopg.errors.CheckViolation: agent_invocations_status_check -- WorkerResult.status ('success'/'failure'/'timeout') was passed directly into agent_invocations.status, whose CHECK constraint only allows 'queued'/'running'/'succeeded'/'failed'/'timed_out' (TASK-0003 schema). Fixed with an explicit _WORKER_STATUS_TO_INVOCATION_STATUS mapping in orchestrator.py; re-ran, passed."
+    result: "FAIL then FIXED -- see orchestrator.py's _WORKER_STATUS_TO_INVOCATION_STATUS"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "verifier.verify() direct call against a real worktree: a trivially-passing test command ('true') and a trivially-failing one ('false')"
+    result: "PASS -- correctly reports passed=True/False respectively; no_secrets_in_changed_files and no_unintended_changes both correctly True on a clean worktree"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "watchdog.run_watchdog_sweep(): seeded one task with retry_count=3 (no prior human_required) and one agent_invocations row stuck 'running' for 60 simulated minutes"
+    result: "PASS -- retry-exhausted task escalated to human_required_queue (reason=INVOCATION_FAILURE); dead invocation marked 'failed' with a watchdog error message; both visible via human_queue_repo.open_pauses()"
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "Teardown: ephemeral container removed (docker rm -f), throwaway test worktree/branch removed (git worktree remove --force, git branch -D) -- no state from this validation left behind"
+    result: PASS
+    ran_at: 2026-10-04T00:00:00Z
+  - command: "grep for credential/secret patterns across all new/changed files"
+    result: PASS -- clean
+    ran_at: 2026-10-04T00:00:00Z
+
+blockers:
+  - "Not a blocker for this task's own completion. Carried forward from TASK-0004: live dispatch against the persistent marcos-tasks-db container needs human approval (HUMAN_REQUIRED_QUEUE.md #1); this orchestrator has only ever run against ephemeral containers."
+  - "The CHECKPOINT step (commit/push) is deliberately not auto-dispatched by this orchestrator -- see this task's objective and HUMAN_REQUIRED_QUEUE.md #2. A human-directed Builder session still performs every actual checkpoint, including this one."
+
+decisions: []
+
+checkpoint:
+  branch: checkpoint/TASK-0005-orchestrator-verifier-watchdog-v1
+  commit: null
+  pushed: false
+  validated: true
+  build_state_updated: true
+  changelog_updated: true
+
+human_required: false
+human_action: null
+
+next_agent: Chairman
+
+timestamps:
+  created: 2026-10-04T00:00:00Z
+  updated: 2026-10-04T00:00:00Z
+  started: 2026-10-04T00:00:00Z
+  completed: 2026-10-04T00:00:00Z

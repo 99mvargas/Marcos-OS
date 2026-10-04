@@ -35,27 +35,26 @@ both currently exist.
 
 ## Current Task
 
-- **ID:** `TASK-0004-headless-worker-contract`
-- **Status:** `CHECKPOINT`
+- **ID:** `TASK-0005-orchestrator-verifier-watchdog`
+- **Status:** `COMPLETED`
 - **Assigned agent:** Builder (Claude Code)
-- **Objective:** Build and empirically validate the headless worker
-  invocation contract for Claude Code and Codex — a bounded adapter (task
-  + worktree + explicit role + acceptance criteria → structured
-  `WorkerResult`) with per-role permission profiles enforced at the
-  tool-allowlist level, never via a full permission-bypass flag. Does not
-  implement the Orchestrator (TASK-0005) and does not start the persistent
-  `marcos-tasks-db` container.
-- **Human action required:** No, for this checkpoint's own completion.
-  Two independent items recorded in `HUMAN_REQUIRED_QUEUE.md` (#1: approve
-  starting `marcos-tasks-db`; #2: approve a scoped low-risk task for the
-  first real Builder-role headless dry run against this repository) —
-  neither blocks TASK-0005, which proceeds against an ephemeral Postgres
-  container exactly as TASK-0003 did.
-- **Next agent:** Chairman (review the implementation, `DEC-010`, `DEC-011`,
-  and the two open `HUMAN_REQUIRED_QUEUE.md` items).
+- **Objective:** Implement the Orchestrator role as deterministic Python
+  code (per `DEC-010`) that claims tasks from Postgres and dispatches
+  TASK-0004's headless workers, plus an independent Verifier (secrets/
+  scope/real-test checks) and a Watchdog (leases, retry exhaustion, dead
+  workers, cost-audit signal). Deliberately stops short of auto-dispatching
+  the `CHECKPOINT` step itself against a real repository.
+- **Human action required:** No, for this checkpoint's own completion. The
+  two items in `HUMAN_REQUIRED_QUEUE.md` from TASK-0004 remain open and
+  unaffected by this task.
+- **Next agent:** Chairman (review the implementation and decide on the
+  two open `HUMAN_REQUIRED_QUEUE.md` items, which gate live use, not this
+  checkpoint).
 
 ## Previous Tasks
 
+- **ID:** `TASK-0004-headless-worker-contract` — `COMPLETED`, see
+  `checkpoint/TASK-0004-headless-worker-contract-v1`.
 - **ID:** `TASK-0003-runtime-state-store` — `COMPLETED`, see
   `checkpoint/TASK-0003-runtime-state-store-v1`.
 - **ID:** `TASK-0002-autonomous-agent-runtime` — `COMPLETED`, see
@@ -65,11 +64,51 @@ both currently exist.
 
 ## What Changed This Checkpoint
 
+- Added `apps/marcos-api/app/runtime/orchestrator.py` — claims the next
+  dispatchable task (`tasks_repo.claim_next_dispatchable_task`, a new
+  generalization of TASK-0003's READY-only claim to every state with a
+  worker-dispatchable `next_agent`), builds a targeted role prompt from the
+  task row's own fields (no repo dump), dispatches the matching
+  Claude/Codex worker, records `agent_invocations`/`task_events`, and
+  applies the deterministic state-machine transition the result implies.
+  `CHECKPOINT` is intentionally excluded from the dispatchable set — a
+  human-directed Builder session still performs every real checkpoint.
+- Added `apps/marcos-api/app/runtime/verifier.py` — independent,
+  non-LLM checks (secret-pattern scan, unintended-changes-vs-declared-scope
+  diff, real test-command execution) run before a Builder/Tester result is
+  accepted, per `AUTONOMOUS_AGENT_PROTOCOL.md` §11's "don't let the builder
+  declare its own work correct."
+- Added `apps/marcos-api/app/runtime/watchdog.py` — lease-expiry sweep,
+  retry-exhaustion escalation to `HUMAN_REQUIRED` (reason
+  `INVOCATION_FAILURE`), dead-invocation detection (a `running` row with no
+  completion past a timeout window), and a cost-audit log signal (not an
+  auto-pause, per the already-decided `docs/TOKEN_EFFICIENCY.md` scope).
+- Validated end-to-end against a real, ephemeral `postgres:16-alpine`
+  container (migrated via `database/migrate.py`, torn down immediately
+  after): a missing-worktree case correctly raised `HUMAN_REQUIRED`
+  (`WORKTREE_MISSING`) rather than crashing; a real Researcher-role `claude
+  -p` dispatch correctly transitioned a task `READY → RESEARCHING →
+  ARCHITECTED`; the Verifier correctly passed/failed on a trivial
+  true/false test command; the Watchdog correctly escalated a
+  retry-exhausted task and marked a simulated dead invocation `failed`.
+  This run surfaced and fixed a real bug: `WorkerResult.status`
+  (success/failure/timeout) was being written directly into
+  `agent_invocations.status`, whose CHECK constraint uses a different
+  vocabulary (succeeded/failed/timed_out) — fixed with an explicit mapping
+  in `orchestrator.py`, re-verified after the fix.
+- Updated `CHANGELOG.md`.
+- No live Postgres, Docker, network, or production changes (the throwaway
+  container and its test worktree/branch were both torn down after
+  validation). No secrets committed. Small real API spend during
+  validation (one Researcher-role Haiku call) — see this task's `tests`.
+
+## What Changed in the TASK-0004 Checkpoint
+
 - Added `apps/marcos-api/app/runtime/{permissions,worker_result,
   claude_worker,codex_worker}.py` — the headless worker invocation
   contract. `permissions.py` encodes docs/RUNTIME_ARCHITECTURE.md §9's
   per-role tool table for both providers; `worker_result.py` is the typed
-  result both the future Orchestrator and Verifier read instead of prose;
+  result the Orchestrator/Verifier read instead of prose;
   `claude_worker.py`/`codex_worker.py` shell out to `claude -p`/`codex exec`
   respectively and parse their real (empirically verified, not assumed)
   JSON/JSONL output schemas.
@@ -92,14 +131,11 @@ both currently exist.
   the enforcement boundary, verified empirically after this repository's
   own auto-mode safety classifier flagged a bypass attempt during testing.
 - Added `HUMAN_REQUIRED_QUEUE.md` — the pre-Postgres durable equivalent of
-  the `human_required_queue` table, with two open entries (see above).
-- Updated `CHANGELOG.md`.
-- No Orchestrator, Verifier, or Watchdog implemented yet (TASK-0005). No
-  live Postgres, Docker, network, or production changes. No secrets
-  committed. Real but small (~$0.35 USD, cheapest/Haiku tier) API spend
-  during empirical validation — see `tasks/TASK-0004-headless-worker-contract.yaml`'s `tests`.
+  the `human_required_queue` table, with two open entries (still open).
+- Real but small (~$0.35 USD, cheapest/Haiku tier) API spend during
+  empirical validation — see `tasks/TASK-0004-headless-worker-contract.yaml`'s `tests`.
 
-## What Changed in the Previous Checkpoint (TASK-0003)
+## What Changed in the TASK-0003 Checkpoint
 
 - Added `database/migrations/0001`–`0005` — the five runtime tables
   (`tasks`, `task_events`, `agent_invocations`, `human_required_queue`,
@@ -149,10 +185,12 @@ both currently exist.
   captures/finance/statements; **`app/db/` (TASK-0003)** is a separate
   `psycopg`-based access layer for the Autonomous Agent Protocol's runtime
   state store — distinct tables, distinct purpose, not wired into the
-  FastAPI routes yet. **`app/runtime/` (new, TASK-0004)** is the headless
-  Claude Code/Codex worker invocation contract — also not wired into the
-  FastAPI routes; it is invoked directly by whatever dispatches a worker
-  (manually today, TASK-0005's Orchestrator next).
+  FastAPI routes yet. **`app/runtime/` (TASK-0004 + TASK-0005)** is the
+  headless Claude Code/Codex worker invocation contract plus the
+  Orchestrator/Verifier/Watchdog that dispatch it — also not wired into
+  the FastAPI routes; it is run by calling `orchestrator.run_cycle()`
+  directly today (manually, or from a cron/systemd timer a human sets up),
+  not by a persistent service.
 - `apps/marcos-core/` — earlier-phase Python executive/memory engine,
   untouched, unrelated to marcos-api.
 - `database/` — **(new, TASK-0003)** the runtime state store's SQL
@@ -177,14 +215,18 @@ both currently exist.
 
 ## Next Action
 
-TASK-0005 (Python Orchestrator + Verifier + Watchdog) proceeds next,
-validated against an ephemeral Postgres container exactly as TASK-0003 and
-TASK-0004 were. Two independent items await a human decision in
-`HUMAN_REQUIRED_QUEUE.md` (#1: approve starting the persistent
-`marcos-tasks-db` container; #2: approve a scoped low-risk task for the
-first real Builder-role headless dry run) — neither blocks TASK-0005.
+TASK-0003 through TASK-0005 are complete and validated, each against an
+ephemeral Postgres container — the runtime has never touched the
+persistent `marcos-tasks-db` service. The next continuation is TASK-0006
+(Architect/Chairman-assist API service + Telegram notify/resume, per
+`docs/RUNTIME_ARCHITECTURE.md` §22 item 4) and/or actually running the
+Orchestrator against this repository's own backlog once a human resolves
+`HUMAN_REQUIRED_QUEUE.md` #1 (start `marcos-tasks-db`). Two independent
+items await a human decision there (#1: start the persistent container;
+#2: approve a scoped low-risk task for the first real Builder-role
+headless dry run) — neither blocked TASK-0004 or TASK-0005.
 
 ---
 
 _Last updated: 2026-10-04 by Claude Code (Builder), checkpoint
-`checkpoint/TASK-0004-headless-worker-contract-v1`._
+`checkpoint/TASK-0005-orchestrator-verifier-watchdog-v1`._
